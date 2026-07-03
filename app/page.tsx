@@ -1,65 +1,80 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import Link from "next/link";
+import { Settings, Zap, Disc3, Layers, Search, Gauge } from "lucide-react";
+import GameCard from "@/components/GameCard";
+import VideoIntro from "@/components/VideoIntro";
+import Logo from "@/components/Logo";
+import { GAMES } from "@/data/games";
+import { useSettings } from "@/lib/store";
+import { useMountFlag } from "@/lib/useMountFlag";
+
+const GAME_ICONS = {
+  "buzz-and-drill": Zap,
+  "spin-and-spark": Disc3,
+  "pipeline-puzzle": Layers,
+  "hazard-hunt": Search,
+  "pressure-point": Gauge,
+} as const;
+
+const OPENING_SEEN_KEY = "nog-arena:seen-opening";
+
+export default function HomePage() {
+  const { backgroundVideoEnabled } = useSettings();
+  const openingUnseen = useMountFlag(() => !sessionStorage.getItem(OPENING_SEEN_KEY));
+  const [dismissed, setDismissed] = useState(false);
+  const showOpening = openingUnseen && !dismissed;
+
+  function dismissOpening() {
+    sessionStorage.setItem(OPENING_SEEN_KEY, "1");
+    setDismissed(true);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-white px-6 py-12">
+      {backgroundVideoEnabled && (
+        <VideoIntro
+          src="/videos/oil-gas-loop.mp4"
+          label="Background loop"
+          variant="background"
+          onEnd={() => {}}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      )}
+
+      {showOpening && (
+        <VideoIntro
+          src="/videos/opening-video.mp4"
+          label="Opening Video"
+          onEnd={dismissOpening}
+        />
+      )}
+
+      <div className="flex flex-col items-center text-center">
+        <Logo className="mb-4 h-28 w-auto sm:h-40" priority />
+        <span className="rounded-full bg-nog-gold-500/15 px-5 py-2 text-sm font-bold uppercase tracking-widest text-nog-gold-700">
+          Nigeria Oil &amp; Gas Conference
+        </span>
+        <h1 className="mt-6 text-6xl font-black tracking-tight text-nog-black sm:text-7xl">
+          NOG <span className="text-nog-green-700">ARENA</span>
+        </h1>
+        <p className="mt-4 max-w-xl text-xl font-semibold text-nog-black/60">
+          Step up, take the challenge, and prove your energy sector know-how.
+        </p>
+      </div>
+
+      <div className="mt-14 grid w-full max-w-6xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {GAMES.map((game, i) => (
+          <GameCard key={game.id} game={game} icon={GAME_ICONS[game.id]} index={i} />
+        ))}
+      </div>
+
+      <Link
+        href="/admin"
+        className="mt-16 flex items-center gap-2 rounded-full border-2 border-nog-black/10 px-5 py-3 text-base font-bold text-nog-black/50 hover:border-nog-green-600 hover:text-nog-green-700 transition-colors"
+      >
+        <Settings size={18} /> Admin Settings
+      </Link>
+    </main>
   );
 }

@@ -1,0 +1,3 @@
+Placeholder for oil-gas-loop.mp4
+Drop a real MP4 file named "oil-gas-loop.mp4" in this folder to replace the in-app placeholder box.
+Until then, VideoIntro.tsx will detect the missing/broken video and render a styled placeholder automatically.

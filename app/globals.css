@@ -2,25 +2,88 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0a0a;
+
+  --nog-green-950: #04241a;
+  --nog-green-900: #063d29;
+  --nog-green-800: #0a5c3a;
+  --nog-green-700: #0d7a48;
+  --nog-green-600: #0f9455;
+  --nog-green-500: #14ad63;
+
+  --nog-gold-700: #a9791f;
+  --nog-gold-600: #c99a2e;
+  --nog-gold-500: #e0b83c;
+  --nog-gold-400: #f2cf5c;
+
+  --nog-black: #0a0a0a;
+  --nog-charcoal: #171a18;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-poppins);
+  --font-display: var(--font-poppins);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-nog-green-950: var(--nog-green-950);
+  --color-nog-green-900: var(--nog-green-900);
+  --color-nog-green-800: var(--nog-green-800);
+  --color-nog-green-700: var(--nog-green-700);
+  --color-nog-green-600: var(--nog-green-600);
+  --color-nog-green-500: var(--nog-green-500);
+
+  --color-nog-gold-700: var(--nog-gold-700);
+  --color-nog-gold-600: var(--nog-gold-600);
+  --color-nog-gold-500: var(--nog-gold-500);
+  --color-nog-gold-400: var(--nog-gold-400);
+
+  --color-nog-black: var(--nog-black);
+  --color-nog-charcoal: var(--nog-charcoal);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+}
+
+/* Conference kiosk: disable text selection & callouts for a cleaner touch/mouse feel */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nog-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.nog-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nog-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--nog-green-700);
+  border-radius: 999px;
+}
+
+@keyframes logo-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-logo-float {
+  animation: logo-float 4s ease-in-out infinite;
+}
+
+@keyframes logo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-logo-spin {
+  animation: logo-spin 2.5s linear infinite;
 }
