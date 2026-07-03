@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Film, SkipForward, Play } from "lucide-react";
 
@@ -12,6 +12,11 @@ interface VideoIntroProps {
   muted?: boolean;
 }
 
+/** Videos may 404 or simply never fire `error` reliably across browsers, so a
+ * short watchdog timeout backs up the error handler — otherwise a missing
+ * file can leave the fullscreen overlay stuck forever with nothing to click. */
+const LOAD_TIMEOUT_MS = 2500;
+
 export default function VideoIntro({
   src,
   label,
@@ -20,6 +25,18 @@ export default function VideoIntro({
   muted = false,
 }: VideoIntroProps) {
   const [failed, setFailed] = useState(false);
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!startedRef.current) setFailed(true);
+    }, LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [src]);
+
+  function markStarted() {
+    startedRef.current = true;
+  }
 
   if (variant === "background") {
     if (failed) return null;
@@ -30,6 +47,7 @@ export default function VideoIntro({
         muted
         loop
         playsInline
+        onLoadedData={markStarted}
         onError={() => setFailed(true)}
         className="pointer-events-none absolute inset-0 -z-10 h-full w-full object-cover opacity-15"
       />
@@ -72,6 +90,7 @@ export default function VideoIntro({
           muted={muted}
           playsInline
           onEnded={onEnd}
+          onPlaying={markStarted}
           onError={() => setFailed(true)}
           className="max-h-full max-w-full"
         />
