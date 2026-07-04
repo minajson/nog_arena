@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { playSound } from "@/lib/sound";
+import { speak, VOICE_LINES } from "@/lib/speech";
 
 interface TimerProps {
   duration: number;
@@ -46,6 +47,7 @@ export default function Timer({
     if (secondsLeft <= warningThreshold && secondsLeft > 0 && !warnedRef.current) {
       warnedRef.current = true;
       playSound("warning");
+      speak(VOICE_LINES.hurryUp);
     }
     if (secondsLeft <= 0 && !expiredRef.current) {
       expiredRef.current = true;
@@ -66,27 +68,35 @@ export default function Timer({
   const textColor = isCritical ? "text-red-600" : isWarning ? "text-nog-gold-600" : "text-nog-green-800";
 
   return (
-    <div className="w-full">
+    <motion.div
+      animate={isCritical ? { scale: [1, 1.015, 1] } : { scale: 1 }}
+      transition={isCritical ? { duration: 0.6, repeat: Infinity } : undefined}
+      className="w-full"
+    >
       <div className="flex items-center justify-between mb-2">
-        <span className="text-lg font-bold text-nog-black/60 uppercase tracking-wide">
+        <span className="text-lg font-bold text-nog-black/60 uppercase tracking-wide lg:text-xl">
           Time Left
         </span>
         <motion.span
           key={timeLeft}
-          initial={{ scale: isWarning ? 1.3 : 1 }}
+          initial={{ scale: isCritical ? 1.5 : isWarning ? 1.3 : 1 }}
           animate={{ scale: 1 }}
-          className={`text-4xl font-black tabular-nums ${textColor}`}
+          className={`text-4xl font-black tabular-nums lg:text-5xl xl:text-6xl ${textColor} ${isCritical ? "drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]" : ""}`}
         >
           {timeLeft}s
         </motion.span>
       </div>
-      <div className="h-4 w-full rounded-full bg-nog-black/10 overflow-hidden">
+      <div
+        className={`h-4 w-full rounded-full bg-nog-black/10 overflow-hidden lg:h-5 ${
+          isCritical ? "shadow-[0_0_0_4px_rgba(220,38,38,0.2)]" : isWarning ? "shadow-[0_0_0_3px_rgba(224,184,60,0.2)]" : ""
+        }`}
+      >
         <motion.div
           animate={{ width: `${pct}%` }}
           transition={{ ease: "linear", duration: 0.3 }}
           className={`h-full rounded-full ${barColor} ${isCritical ? "animate-pulse" : ""}`}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

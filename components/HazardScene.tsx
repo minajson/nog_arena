@@ -2,8 +2,52 @@
 
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X as XIcon } from "lucide-react";
+import {
+  Check,
+  X as XIcon,
+  HardHat,
+  Droplet,
+  Droplets,
+  FireExtinguisher,
+  Zap,
+  Cylinder,
+  Hand,
+  Footprints,
+  Cigarette,
+  Trash2,
+  Construction,
+  Toolbox,
+  WavesLadder,
+  FishingHook,
+  ClipboardList,
+  TriangleAlert,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { Hazard, DecoySpot } from "@/data/hazards";
+
+/** Maps the default hazard ids to a distinct found-state icon; anything else (admin-added
+ * hazards) falls back to a generic warning triangle. */
+const HAZARD_ICONS: Record<string, LucideIcon> = {
+  h1: HardHat,
+  h2: Droplet,
+  h3: FireExtinguisher,
+  h4: Zap,
+  h5: Cylinder,
+  h6: Hand,
+  h7: Footprints,
+  h8: Droplets,
+  h9: Cigarette,
+  h10: Trash2,
+  h11: Construction,
+  h12: Toolbox,
+  h13: WavesLadder,
+  h14: FishingHook,
+  h15: ClipboardList,
+};
+
+function iconForHazard(id: string): LucideIcon {
+  return HAZARD_ICONS[id] ?? TriangleAlert;
+}
 
 interface FeedbackMarker {
   key: number;
@@ -18,6 +62,8 @@ interface HazardSceneProps {
   found: Set<string>;
   hintHazardId: string | null;
   mildClues: boolean;
+  shake?: boolean;
+  tense?: boolean;
   onHazardClick: (id: string, x: number, y: number) => void;
   onDecoyClick: (x: number, y: number) => void;
   onBackgroundMiss: () => void;
@@ -29,12 +75,15 @@ export default function HazardScene({
   found,
   hintHazardId,
   mildClues,
+  shake = false,
+  tense = false,
   onHazardClick,
   onDecoyClick,
   onBackgroundMiss,
 }: HazardSceneProps) {
   const [markers, setMarkers] = useState<FeedbackMarker[]>([]);
   const keyRef = useRef(0);
+  const hintHazard = hazards.find((h) => h.id === hintHazardId);
 
   function addMarker(x: number, y: number, correct: boolean) {
     const key = keyRef.current++;
@@ -43,10 +92,25 @@ export default function HazardScene({
   }
 
   return (
-    <div
+    <motion.div
       onClick={onBackgroundMiss}
-      className="relative aspect-[5/3] w-full cursor-crosshair overflow-hidden rounded-3xl border-2 border-nog-black/10 shadow-md"
+      animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : { x: 0 }}
+      className={`relative aspect-5/3 w-full cursor-crosshair overflow-hidden rounded-3xl border-2 shadow-md transition-colors ${
+        tense ? "border-red-500/50 shadow-[0_0_0_4px_rgba(220,38,38,0.15)]" : "border-nog-black/10"
+      }`}
     >
+      {hintHazard && (
+        <motion.div
+          key={hintHazard.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.5, 0.9, 0.5] }}
+          transition={{ duration: 1, repeat: Infinity }}
+          className="pointer-events-none absolute inset-0 z-10"
+          style={{
+            background: `radial-gradient(circle at ${hintHazard.x}% ${hintHazard.y}%, rgba(224,184,60,0.35) 0%, rgba(224,184,60,0.1) 12%, transparent 22%)`,
+          }}
+        />
+      )}
       <svg viewBox="0 0 1000 600" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
         <rect width="1000" height="600" fill="#eaf6ef" />
         <rect y="420" width="1000" height="180" fill="#cfe8d6" />
@@ -67,6 +131,7 @@ export default function HazardScene({
         const isFound = found.has(hazard.id);
         const isHinted = hintHazardId === hazard.id;
         const hitSize = hazard.nearMiss ? "h-9 w-9 sm:h-10 sm:w-10" : "h-12 w-12 sm:h-14 sm:w-14";
+        const Icon = iconForHazard(hazard.id);
         return (
           <button
             key={hazard.id}
@@ -80,15 +145,25 @@ export default function HazardScene({
             style={{ left: `${hazard.x}%`, top: `${hazard.y}%` }}
             className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all ${hitSize} ${
               isFound
-                ? "bg-nog-green-600/20 ring-2 ring-nog-green-600"
+                ? "flex items-center justify-center bg-nog-green-600/15 ring-2 ring-nog-green-600 cursor-default"
                 : isHinted
                   ? "animate-pulse bg-nog-gold-400/25 ring-4 ring-nog-gold-400"
                   : mildClues
                     ? "cursor-pointer bg-nog-gold-400/10 opacity-50 hover:bg-nog-gold-400/25 hover:opacity-100 hover:ring-2 hover:ring-nog-gold-400"
                     : "cursor-pointer opacity-0 hover:bg-white/20 hover:opacity-100 hover:ring-2 hover:ring-nog-gold-400"
             }`}
-            aria-label="hidden hotspot"
-          />
+            aria-label={isFound ? hazard.label : "hidden hotspot"}
+          >
+            {isFound && (
+              <motion.span
+                initial={{ scale: 0, rotate: -30, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 14 }}
+              >
+                <Icon size={hazard.nearMiss ? 18 : 22} className="text-nog-green-700" strokeWidth={2.25} />
+              </motion.span>
+            )}
+          </button>
         );
       })}
 
@@ -108,23 +183,36 @@ export default function HazardScene({
 
       <AnimatePresence>
         {markers.map((m) => (
-          <motion.div
+          <div
             key={m.key}
-            initial={{ opacity: 1, scale: 0.6 }}
-            animate={{ opacity: 0, scale: 1.4 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.85 }}
             style={{ left: `${m.x}%`, top: `${m.y}%` }}
             className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
           >
-            {m.correct ? (
-              <Check className="text-nog-green-600" size={30} />
-            ) : (
-              <XIcon className="text-red-600" size={30} />
-            )}
-          </motion.div>
+            {m.correct &&
+              [0, 1].map((ring) => (
+                <motion.span
+                  key={ring}
+                  initial={{ opacity: 0.6, scale: 0.3 }}
+                  animate={{ opacity: 0, scale: 2.4 }}
+                  transition={{ duration: 0.7, delay: ring * 0.1, ease: "easeOut" }}
+                  className="absolute inset-0 -m-4 rounded-full border-2 border-nog-gold-400"
+                />
+              ))}
+            <motion.div
+              initial={{ opacity: 1, scale: 0.6 }}
+              animate={{ opacity: 0, scale: 1.4 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.85 }}
+            >
+              {m.correct ? (
+                <Check className="text-nog-green-600" size={30} />
+              ) : (
+                <XIcon className="text-red-600" size={30} />
+              )}
+            </motion.div>
+          </div>
         ))}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

@@ -22,7 +22,7 @@ export interface GameSettings {
 
 export const defaultGameSettings: GameSettings = {
   soundEnabled: true,
-  backgroundVideoEnabled: false,
+  backgroundVideoEnabled: true,
 
   buzzTimePerQuestion: 20,
   buzzNumberOfQuestions: 10,

@@ -32,9 +32,14 @@ export default function PlayerSetup({ onStart, maxPlayers = 6, fixedCount }: Pla
   const canStart = fixedCount ? validNames.length === fixedCount : validNames.length >= 1;
 
   return (
-    <div className="mx-auto w-full max-w-lg rounded-3xl border-2 border-nog-black/10 bg-white p-8 shadow-md">
-      <h2 className="mb-1 text-3xl font-black text-nog-black">Who&apos;s Playing?</h2>
-      <p className="mb-6 text-base font-medium text-nog-black/60">
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="relative mx-auto w-full max-w-xl rounded-3xl border-2 border-nog-black/10 bg-white p-8 shadow-md lg:p-10"
+    >
+      <h2 className="mb-1 text-3xl font-black text-nog-black lg:text-4xl">Who&apos;s Playing?</h2>
+      <p className="mb-6 text-base font-medium text-nog-black/60 lg:text-lg">
         Enter player or team names to begin.
       </p>
 
@@ -79,13 +84,15 @@ export default function PlayerSetup({ onStart, maxPlayers = 6, fixedCount }: Pla
         </button>
       )}
 
-      <button
+      <motion.button
         onClick={() => onStart(validNames)}
         disabled={!canStart}
-        className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-nog-green-700 py-4 text-xl font-black text-white shadow-lg hover:bg-nog-green-800 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        whileHover={canStart ? { scale: 1.02 } : undefined}
+        whileTap={canStart ? { scale: 0.98 } : undefined}
+        className="btn-shine mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-nog-green-700 py-4 text-xl font-black text-white shadow-lg hover:bg-nog-green-800 hover:shadow-[0_10px_30px_-8px_rgba(15,148,85,0.6)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-[background-color,box-shadow]"
       >
         <Play size={24} /> Start Game
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }

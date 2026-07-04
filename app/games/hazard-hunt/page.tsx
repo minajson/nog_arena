@@ -11,9 +11,12 @@ import Scoreboard from "@/components/Scoreboard";
 import WinnerScreen from "@/components/WinnerScreen";
 import GameIntro3D from "@/components/GameIntro3D";
 import HazardScene from "@/components/HazardScene";
+import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
+import VideoBackdrop from "@/components/VideoBackdrop";
 import { useHazards, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
+import { speak, VOICE_LINES } from "@/lib/speech";
 import { decoySpots, DIFFICULTY_SETTINGS, type Hazard, type DecoySpot, type HazardDifficulty } from "@/data/hazards";
 import type { PlayerResult } from "@/lib/scoring";
 
@@ -44,6 +47,8 @@ export default function HazardHuntPage() {
   const [banner, setBanner] = useState<string | null>(null);
   const [hintHazardId, setHintHazardId] = useState<string | null>(null);
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [shakeScreen, setShakeScreen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(settings.hazardTimePerPlayer);
 
   function pickHazardSet() {
     const config = DIFFICULTY_SETTINGS[difficulty];
@@ -73,6 +78,7 @@ export default function HazardHuntPage() {
     setPlayerIndex(0);
     setPhase("playing");
     setupTurn(hazards, decoys);
+    speak(VOICE_LINES.gameStart);
   }
 
   function addScore(delta: number, wasCorrect: boolean, countAttempt = true) {
@@ -104,6 +110,7 @@ export default function HazardHuntPage() {
     const hazard = activeHazards.find((h) => h.id === id);
     if (!hazard) return;
     playSound("correct");
+    speak(VOICE_LINES.correct);
     const nextFound = new Set(found).add(id);
     setFound(nextFound);
     addScore(CORRECT_POINTS, true);
@@ -119,8 +126,11 @@ export default function HazardHuntPage() {
   function handleWrongClick() {
     if (!turnActive) return;
     playSound("wrong");
+    speak(VOICE_LINES.wrong);
     addScore(WRONG_POINTS, false);
     setBanner("Not a hazard — look again!");
+    setShakeScreen(true);
+    setTimeout(() => setShakeScreen(false), 400);
   }
 
   function useHint() {
@@ -133,7 +143,7 @@ export default function HazardHuntPage() {
     setHintsUsed((n) => n + 1);
     setHintHazardId(pick.id);
     setBanner(`Hint used (-${HINT_COST} pts) — look closely near the glowing spot.`);
-    setTimeout(() => setHintHazardId((cur) => (cur === pick.id ? null : cur)), 3000);
+    setTimeout(() => setHintHazardId((cur) => (cur === pick.id ? null : cur)), 2000);
   }
 
   function nextPlayerOrResults() {
@@ -153,6 +163,7 @@ export default function HazardHuntPage() {
 
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
+      <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D
           title="Hazard Hunt"
@@ -179,7 +190,8 @@ export default function HazardHuntPage() {
       {phase !== "intro" && <GameTopBar title="Hazard Hunt" />}
 
       {phase === "setup" && (
-        <div className="mx-auto flex max-w-lg flex-col gap-6">
+        <div className="relative mx-auto flex max-w-xl flex-col gap-6">
+          <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <div className="rounded-3xl border-2 border-nog-black/10 p-6 shadow-sm">
             <h3 className="mb-4 text-center text-lg font-black text-nog-black">Choose Difficulty</h3>
             <div className="grid grid-cols-3 gap-3">
@@ -206,17 +218,17 @@ export default function HazardHuntPage() {
       )}
 
       {phase === "playing" && (
-        <div className="mx-auto flex max-w-4xl flex-col gap-6">
+        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-6">
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <span className="rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700">
+            <span className="rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
               {players[playerIndex]}&apos;s Turn — Found {found.size}/{activeHazards.length}
             </span>
             <button
               onClick={useHint}
               disabled={!!hintHazardId}
-              className="flex items-center gap-2 rounded-full border-2 border-nog-gold-500 px-4 py-2 text-sm font-black text-nog-gold-700 hover:bg-nog-gold-500/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center gap-2 rounded-full border-2 border-nog-gold-500 px-4 py-2 text-sm font-black text-nog-gold-700 hover:bg-nog-gold-500/10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer lg:px-5 lg:py-3 lg:text-base"
             >
-              <Lightbulb size={16} /> Hint (-{HINT_COST})
+              <Lightbulb size={16} className="lg:size-5" /> Hint (-{HINT_COST})
             </button>
           </div>
 
@@ -225,6 +237,7 @@ export default function HazardHuntPage() {
             duration={settings.hazardTimePerPlayer}
             isRunning={turnActive}
             onExpire={() => finishTurn(0, "Time's up!")}
+            onTick={setTimeLeft}
             warningThreshold={settings.hazardWarningThreshold}
           />
 
@@ -234,6 +247,8 @@ export default function HazardHuntPage() {
             found={found}
             hintHazardId={hintHazardId}
             mildClues={DIFFICULTY_SETTINGS[difficulty].mildClues}
+            shake={shakeScreen}
+            tense={timeLeft <= settings.hazardWarningThreshold}
             onHazardClick={handleHazardClick}
             onDecoyClick={handleWrongClick}
             onBackgroundMiss={handleWrongClick}
@@ -246,7 +261,7 @@ export default function HazardHuntPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="rounded-2xl bg-nog-black/5 px-6 py-3 text-center text-lg font-bold text-nog-black/70"
+                className="rounded-2xl bg-nog-black/5 px-6 py-3 text-center text-lg font-bold text-nog-black/70 lg:text-xl"
               >
                 {banner}
               </motion.p>

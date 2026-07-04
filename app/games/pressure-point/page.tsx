@@ -10,9 +10,12 @@ import Timer from "@/components/Timer";
 import Scoreboard from "@/components/Scoreboard";
 import WinnerScreen from "@/components/WinnerScreen";
 import GameIntro3D from "@/components/GameIntro3D";
+import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
+import VideoBackdrop from "@/components/VideoBackdrop";
 import { useScenarios, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
+import { speak, VOICE_LINES } from "@/lib/speech";
 import type { Scenario, ScenarioBank } from "@/data/scenarios";
 import type { PlayerResult } from "@/lib/scoring";
 
@@ -66,6 +69,7 @@ export default function PressurePointPage() {
     setPlayerIndex(0);
     setPhase("playing");
     setupTurn(0);
+    speak(VOICE_LINES.gameStart);
   }
 
   const currentScenario = queue[scenarioPos];
@@ -107,9 +111,11 @@ export default function PressurePointPage() {
 
     if (isCorrect) {
       playSound("correct");
+      speak(VOICE_LINES.correct);
       setFeedback({ correct: true, text: `Correct! +${points} pts (includes +${speedBonus} speed bonus)` });
     } else {
       playSound("wrong");
+      speak(VOICE_LINES.wrong);
       setFeedback({ correct: false, text: `${points} pts — Best response: ${currentScenario.correctResponse}` });
     }
     setTimeout(advanceScenario, 1800);
@@ -134,6 +140,7 @@ export default function PressurePointPage() {
 
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
+      <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D
           title="Pressure Point"
@@ -160,14 +167,16 @@ export default function PressurePointPage() {
       {phase !== "intro" && <GameTopBar title="Pressure Point" />}
 
       {phase === "setup" && (
-        <div className="mx-auto max-w-lg">
+        <div className="relative mx-auto max-w-xl">
+          <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <PlayerSetup onStart={startGame} fixedCount={2} />
         </div>
       )}
 
       {phase === "playing" && currentScenario && (
-        <div className="mx-auto flex max-w-3xl flex-col gap-6">
-          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700">
+        <div className="relative mx-auto flex w-[95vw] max-w-300 flex-col gap-6">
+          <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
+          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
             {players[playerIndex]}&apos;s Turn — Scenario {scenarioPos + 1} of {queue.length}
           </span>
 
@@ -180,33 +189,56 @@ export default function PressurePointPage() {
             warningThreshold={settings.pressureWarningThreshold}
           />
 
-          <div className="flex items-start gap-4 rounded-3xl border-2 border-red-500/30 bg-red-500/5 p-8 shadow-md">
-            <AlertTriangle className="mt-1 shrink-0 text-red-600" size={32} />
-            <p className="text-2xl font-black leading-snug text-nog-black">{currentScenario.prompt}</p>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentScenario.id}
+              initial={{ opacity: 0, scale: 0.9, y: -12 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                boxShadow: [
+                  "0 0 0 0 rgba(239,68,68,0.25)",
+                  "0 0 0 8px rgba(239,68,68,0)",
+                ],
+              }}
+              transition={{
+                scale: { type: "spring", stiffness: 300, damping: 20 },
+                boxShadow: { duration: 1.6, repeat: Infinity },
+              }}
+              className="flex items-start gap-4 rounded-3xl border-2 border-red-500/30 bg-red-500/5 p-8 lg:p-10"
+            >
+              <AlertTriangle className="mt-1 shrink-0 text-red-600 lg:size-10" size={32} />
+              <p className="text-2xl font-black leading-snug text-nog-black lg:text-3xl xl:text-4xl">
+                {currentScenario.prompt}
+              </p>
+            </motion.div>
+          </AnimatePresence>
 
           <AnimatePresence mode="wait">
             {feedback ? (
               <motion.div
                 key="feedback"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: -8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: [1.05, 1] }}
                 exit={{ opacity: 0 }}
-                className={`flex items-center gap-3 rounded-2xl px-6 py-4 text-lg font-bold ${
-                  feedback.correct ? "bg-nog-green-600/10 text-nog-green-800" : "bg-red-500/10 text-red-700"
+                className={`flex items-center gap-3 rounded-2xl px-6 py-4 text-lg font-bold lg:px-8 lg:py-5 lg:text-xl ${
+                  feedback.correct
+                    ? "bg-nog-green-600/10 text-nog-green-800 shadow-[0_0_0_4px_rgba(15,148,85,0.15)]"
+                    : "bg-red-500/10 text-red-700 shadow-[0_0_0_4px_rgba(239,68,68,0.15)]"
                 }`}
               >
-                {feedback.correct ? <Check size={24} /> : <XIcon size={24} />}
+                {feedback.correct ? <Check size={24} className="lg:size-8" /> : <XIcon size={24} className="lg:size-8" />}
                 {feedback.text}
               </motion.div>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6">
                 {options.map((opt) => (
                   <button
                     key={opt}
                     onClick={() => chooseOption(opt)}
                     disabled={locked}
-                    className="rounded-2xl border-2 border-nog-black/15 bg-white px-6 py-5 text-left text-lg font-bold text-nog-black hover:border-nog-green-600 disabled:cursor-default cursor-pointer transition-colors"
+                    className="rounded-2xl border-2 border-nog-black/15 bg-white px-6 py-5 text-left text-lg font-bold text-nog-black hover:border-nog-green-600 disabled:cursor-default cursor-pointer transition-colors lg:px-8 lg:py-7 lg:text-2xl"
                   >
                     {opt}
                   </button>

@@ -26,9 +26,13 @@ import Scoreboard from "@/components/Scoreboard";
 import WinnerScreen from "@/components/WinnerScreen";
 import GameIntro3D from "@/components/GameIntro3D";
 import ConfettiCelebration from "@/components/ConfettiCelebration";
+import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
+import VideoBackdrop from "@/components/VideoBackdrop";
+import BurstEffect from "@/components/BurstEffect";
 import { usePipelineSequence, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
+import { speak, VOICE_LINES } from "@/lib/speech";
 import { PIPELINE_PIECE_LABELS, PIPELINE_SCORING, type PipelinePieceType } from "@/data/pipelineData";
 import type { PlayerResult } from "@/lib/scoring";
 
@@ -78,6 +82,7 @@ export default function PipelinePuzzlePage() {
   const [flowing, setFlowing] = useState(false);
   const [celebrating, setCelebrating] = useState(false);
   const [breakdown, setBreakdown] = useState<Breakdown>(emptyBreakdown);
+  const [restoredBurst, setRestoredBurst] = useState(false);
 
   function setupTurn() {
     setSlots(sequence.map(() => null));
@@ -96,6 +101,7 @@ export default function PipelinePuzzlePage() {
     setPlayerIndex(0);
     setPhase("playing");
     setupTurn();
+    speak(VOICE_LINES.gameStart);
   }
 
   function addScore(delta: number, wasCorrect: boolean) {
@@ -123,6 +129,7 @@ export default function PipelinePuzzlePage() {
 
     if (tile.type === sequence[slotIndex]) {
       playSound("correct");
+      speak(VOICE_LINES.correct);
       const nextSlots = slots.map((s, i) => (i === slotIndex ? tile.type : s));
       setSlots(nextSlots);
       setTray((prev) => prev.filter((t) => t.id !== tile.id));
@@ -139,7 +146,9 @@ export default function PipelinePuzzlePage() {
         addScore(completionBonus + timeBonus, false);
         playSound("celebration");
         setFlowing(true);
+        setRestoredBurst(true);
         setTurnActive(false);
+        setTimeout(() => setRestoredBurst(false), 1300);
         setTimeout(() => {
           finishTurn(
             { ...nextBreakdown, completionBonus, timeBonus, completed: true },
@@ -149,6 +158,7 @@ export default function PipelinePuzzlePage() {
       }
     } else {
       playSound("wrong");
+      speak(VOICE_LINES.wrong);
       addScore(PIPELINE_SCORING.wrongPiece, false);
       setSelectedTile(null);
       setShakeSlot(slotIndex);
@@ -189,14 +199,17 @@ export default function PipelinePuzzlePage() {
               : { x: 0, scale: 1 }
         }
         transition={isFlowLit ? { delay: i * 0.05, duration: 0.4 } : undefined}
-        className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:h-[4.5rem] sm:w-[4.5rem] sm:text-[11px] ${
+        className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:h-20 sm:w-20 sm:text-[11px] lg:h-24 lg:w-24 lg:gap-1.5 lg:text-sm xl:h-28 xl:w-28 xl:text-base ${
           filled
             ? `border-nog-green-600 bg-nog-green-600/10 text-nog-green-800 ${isGlowing || isFlowLit ? "shadow-[0_0_0_6px_rgba(15,148,85,0.25)]" : ""}`
             : "border-dashed border-nog-black/20 text-nog-black/30 hover:border-nog-green-500"
         }`}
       >
-        {Icon ? <Icon size={18} className="sm:hidden" /> : <span className="text-base sm:hidden">?</span>}
-        {Icon ? <Icon size={24} className="hidden sm:block" /> : <span className="hidden text-xl sm:block">?</span>}
+        {Icon ? (
+          <Icon className="size-4.5 sm:size-6 lg:size-8 xl:size-9" />
+        ) : (
+          <span className="text-base sm:text-lg lg:text-2xl">?</span>
+        )}
         <span className="leading-none">{filled ? PIPELINE_PIECE_LABELS[filled] : i + 1}</span>
       </motion.button>
     );
@@ -210,6 +223,7 @@ export default function PipelinePuzzlePage() {
 
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
+      <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D
           title="Pipeline Puzzle"
@@ -236,15 +250,18 @@ export default function PipelinePuzzlePage() {
       {phase !== "intro" && <GameTopBar title="Pipeline Puzzle" />}
 
       {phase === "setup" && (
-        <div className="mx-auto max-w-lg">
+        <div className="relative mx-auto max-w-xl">
+          <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <PlayerSetup onStart={startGame} fixedCount={2} />
         </div>
       )}
 
       {phase === "playing" && (
-        <div className="mx-auto flex max-w-5xl flex-col gap-6">
-          <h2 className="text-center text-3xl font-black text-nog-black">Pipeline Puzzle</h2>
-          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700">
+        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-6 2xl:gap-8">
+          <h2 className="text-center text-3xl font-black text-nog-black lg:text-4xl xl:text-5xl">
+            Pipeline Puzzle
+          </h2>
+          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
             {players[playerIndex]}&apos;s Turn
           </span>
 
@@ -257,88 +274,93 @@ export default function PipelinePuzzlePage() {
             warningThreshold={settings.pipelineWarningThreshold}
           />
 
-          <div className="flex flex-col items-center gap-1 rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md sm:gap-2 sm:p-6">
-            <div className="flex items-center justify-center gap-1 sm:gap-2">
-              <PipelineNode icon={Fuel} label="Oil Well" />
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-1 sm:gap-2">
-                  <ArrowRight className="text-nog-black/20" size={14} />
-                  {renderSlot(i)}
+          <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start 2xl:gap-8">
+            <div className="relative flex flex-1 flex-col items-center gap-1 rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md sm:gap-2 sm:p-6 lg:gap-3 lg:p-8 xl:p-10">
+              <BurstEffect active={restoredBurst} color="gold" label="Pipeline Restored!" />
+              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                <PipelineNode icon={Fuel} label="Oil Well" />
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                    <ArrowRight className="text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                    {renderSlot(i)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex w-full justify-end pr-4 sm:pr-8">
+                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+              </div>
+
+              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                {[4, 5, 6, 7].map((i) => (
+                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                    {renderSlot(i)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex w-full justify-start pl-4 sm:pl-8">
+                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+              </div>
+
+              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                {[8, 9, 10, 11].map((i) => (
+                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                    {i !== 8 && <ArrowRight className="text-nog-black/20 lg:size-5 xl:size-6" size={14} />}
+                    {renderSlot(i)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex w-full justify-end pr-4 sm:pr-8">
+                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+              </div>
+
+              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                <PipelineNode icon={Factory} label="Processing Facility" />
+                {[12, 13, 14].map((i) => (
+                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                    {renderSlot(i)}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-6 2xl:w-100 2xl:shrink-0">
+              <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-6 shadow-md lg:p-8">
+                <p className="mb-3 text-center text-base font-bold uppercase tracking-wide text-nog-black/50 lg:text-lg">
+                  Tap a piece, then tap the slot to place it
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 lg:gap-4 2xl:grid-cols-2">
+                  {tray.map((tile) => {
+                    const Icon = PIECE_ICONS[tile.type];
+                    const isSelected = selectedTile === tile.id;
+                    return (
+                      <button
+                        key={tile.id}
+                        onClick={() => setSelectedTile(isSelected ? null : tile.id)}
+                        className={`flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-4 py-4 text-sm font-bold cursor-pointer transition-colors lg:min-h-28 lg:text-base ${
+                          isSelected
+                            ? "border-nog-gold-500 bg-nog-gold-500/15 text-nog-gold-700 ring-4 ring-nog-gold-500/30"
+                            : "border-nog-black/15 text-nog-black/70 hover:border-nog-green-600"
+                        }`}
+                      >
+                        <Icon className="size-7 lg:size-9" />
+                        {PIPELINE_PIECE_LABELS[tile.type]}
+                      </button>
+                    );
+                  })}
+                  {tray.length === 0 && (
+                    <p className="col-span-full text-lg font-semibold text-nog-black/40">All pieces placed!</p>
+                  )}
                 </div>
-              ))}
-            </div>
+              </div>
 
-            <div className="flex w-full justify-end pr-4 sm:pr-8">
-              <ArrowDown className="text-nog-black/20" size={18} />
-            </div>
-
-            <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2">
-              {[4, 5, 6, 7].map((i) => (
-                <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2">
-                  <ArrowRight className="rotate-180 text-nog-black/20" size={14} />
-                  {renderSlot(i)}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex w-full justify-start pl-4 sm:pl-8">
-              <ArrowDown className="text-nog-black/20" size={18} />
-            </div>
-
-            <div className="flex items-center justify-center gap-1 sm:gap-2">
-              {[8, 9, 10, 11].map((i) => (
-                <div key={i} className="flex items-center gap-1 sm:gap-2">
-                  {i !== 8 && <ArrowRight className="text-nog-black/20" size={14} />}
-                  {renderSlot(i)}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex w-full justify-end pr-4 sm:pr-8">
-              <ArrowDown className="text-nog-black/20" size={18} />
-            </div>
-
-            <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2">
-              <PipelineNode icon={Factory} label="Processing Facility" />
-              {[12, 13, 14].map((i) => (
-                <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2">
-                  <ArrowRight className="rotate-180 text-nog-black/20" size={14} />
-                  {renderSlot(i)}
-                </div>
-              ))}
+              <Scoreboard players={results} title="Live Scores" />
             </div>
           </div>
-
-          <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-6 shadow-md">
-            <p className="mb-3 text-center text-base font-bold uppercase tracking-wide text-nog-black/50">
-              Tap a piece, then tap the slot to place it
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {tray.map((tile) => {
-                const Icon = PIECE_ICONS[tile.type];
-                const isSelected = selectedTile === tile.id;
-                return (
-                  <button
-                    key={tile.id}
-                    onClick={() => setSelectedTile(isSelected ? null : tile.id)}
-                    className={`flex flex-col items-center gap-1 rounded-2xl border-2 px-5 py-4 text-sm font-bold cursor-pointer transition-colors ${
-                      isSelected
-                        ? "border-nog-gold-500 bg-nog-gold-500/15 text-nog-gold-700 ring-4 ring-nog-gold-500/30"
-                        : "border-nog-black/15 text-nog-black/70 hover:border-nog-green-600"
-                    }`}
-                  >
-                    <Icon size={28} />
-                    {PIPELINE_PIECE_LABELS[tile.type]}
-                  </button>
-                );
-              })}
-              {tray.length === 0 && (
-                <p className="text-lg font-semibold text-nog-black/40">All pieces placed!</p>
-              )}
-            </div>
-          </div>
-
-          <Scoreboard players={results} title="Live Scores" />
         </div>
       )}
 
@@ -404,12 +426,13 @@ export default function PipelinePuzzlePage() {
 
 function PipelineNode({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex shrink-0 flex-col items-center gap-1">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 sm:h-[4.5rem] sm:w-[4.5rem]">
-        <Icon size={22} className="sm:hidden" />
-        <Icon size={30} className="hidden sm:block" />
+    <div className="flex shrink-0 flex-col items-center gap-1 lg:gap-2">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28">
+        <Icon className="size-5.5 sm:size-7.5 lg:size-9 xl:size-10" />
       </div>
-      <span className="max-w-20 text-center text-[10px] font-bold text-nog-black/70 sm:text-xs">{label}</span>
+      <span className="max-w-20 text-center text-[10px] font-bold text-nog-black/70 sm:text-xs lg:max-w-28 lg:text-sm xl:text-base">
+        {label}
+      </span>
     </div>
   );
 }
