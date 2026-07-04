@@ -3,20 +3,22 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Check, X as XIcon } from "lucide-react";
+import { AlertTriangle, Check, Gauge, X as XIcon } from "lucide-react";
 import GameTopBar from "@/components/GameTopBar";
 import PlayerSetup from "@/components/PlayerSetup";
 import Timer from "@/components/Timer";
 import Scoreboard from "@/components/Scoreboard";
 import WinnerScreen from "@/components/WinnerScreen";
-import VideoIntro from "@/components/VideoIntro";
+import GameIntro3D from "@/components/GameIntro3D";
 import { useScenarios, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
-import type { Scenario } from "@/data/scenarios";
+import type { Scenario, ScenarioBank } from "@/data/scenarios";
 import type { PlayerResult } from "@/lib/scoring";
 
 type Phase = "intro" | "setup" | "playing" | "turn-end" | "results";
+
+const BANK_FOR_PLAYER: ScenarioBank[] = ["player1", "player2"];
 
 function buildOptions(scenario: Scenario): string[] {
   return shuffleArray([scenario.correctResponse, ...scenario.wrongOptions]);
@@ -41,8 +43,9 @@ export default function PressurePointPage() {
   const timeLeftRef = useRef(settings.pressureTimePerPlayer);
   const scenarioStartRef = useRef(settings.pressureTimePerPlayer);
 
-  function setupTurn() {
-    const enabled = allScenarios.filter((s) => s.enabled);
+  function setupTurn(forPlayerIndex: number) {
+    const bank = BANK_FOR_PLAYER[forPlayerIndex];
+    const enabled = allScenarios.filter((s) => s.enabled && s.bank === bank);
     const count = Math.min(settings.pressureNumberOfScenarios, enabled.length) || enabled.length;
     const picked = shuffleArray(enabled).slice(0, Math.max(count, 1));
     setQueue(picked);
@@ -62,7 +65,7 @@ export default function PressurePointPage() {
     setResults(names.map((name) => ({ name, score: 0, correct: 0, total: 0 })));
     setPlayerIndex(0);
     setPhase("playing");
-    setupTurn();
+    setupTurn(0);
   }
 
   const currentScenario = queue[scenarioPos];
@@ -91,7 +94,8 @@ export default function PressurePointPage() {
     setLocked(true);
     const isCorrect = option === currentScenario.correctResponse;
     const reaction = Math.max(0, scenarioStartRef.current - timeLeftRef.current);
-    const points = isCorrect ? Math.max(5, 20 - reaction * 2) : 0;
+    const speedBonus = Math.max(1, 5 - Math.floor(reaction));
+    const points = isCorrect ? 10 + speedBonus : -5;
 
     setResults((prev) =>
       prev.map((p, i) =>
@@ -103,10 +107,10 @@ export default function PressurePointPage() {
 
     if (isCorrect) {
       playSound("correct");
-      setFeedback({ correct: true, text: `Correct! +${points} pts` });
+      setFeedback({ correct: true, text: `Correct! +${points} pts (includes +${speedBonus} speed bonus)` });
     } else {
       playSound("wrong");
-      setFeedback({ correct: false, text: `Best response: ${currentScenario.correctResponse}` });
+      setFeedback({ correct: false, text: `${points} pts — Best response: ${currentScenario.correctResponse}` });
     }
     setTimeout(advanceScenario, 1800);
   }
@@ -115,7 +119,7 @@ export default function PressurePointPage() {
     if (playerIndex === 0) {
       setPlayerIndex(1);
       setPhase("playing");
-      setupTurn();
+      setupTurn(1);
     } else {
       setPhase("results");
     }
@@ -125,13 +129,33 @@ export default function PressurePointPage() {
     router.push("/");
   }
 
+  const currentResult = results[playerIndex];
+  const accuracy = currentResult && currentResult.total > 0 ? Math.round((currentResult.correct / currentResult.total) * 100) : 0;
+
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
-      <AnimatePresence mode="wait">
-        {phase === "intro" && (
-          <VideoIntro key="intro" src="/videos/game-intro.mp4" label="Pressure Point Intro" onEnd={() => setPhase("setup")} />
-        )}
-      </AnimatePresence>
+      {phase === "intro" && (
+        <GameIntro3D
+          title="Pressure Point"
+          icon={Gauge}
+          objective="Make the right emergency call, fast. Each player answers their own set of scenarios against the clock."
+          players="2 Players (separate question sets)"
+          timer={`${settings.pressureTimePerPlayer}s total per player`}
+          howToPlay={[
+            "Read the emergency scenario and pick the best first response.",
+            "Answer as many scenarios as you can before your timer runs out.",
+            "Player 1 and Player 2 get different but equally balanced question sets.",
+            "Wrong answers reveal the correct response before moving on.",
+          ]}
+          scoring={[
+            "Correct answer: +10 points.",
+            "Speed bonus: +1 to +5 based on how fast you answer.",
+            "Wrong answer: -5 points, with an explanation shown.",
+            "End screen shows score, attempts, correct count, accuracy and the winner.",
+          ]}
+          onContinue={() => setPhase("setup")}
+        />
+      )}
 
       {phase !== "intro" && <GameTopBar title="Pressure Point" />}
 
@@ -195,9 +219,17 @@ export default function PressurePointPage() {
         </div>
       )}
 
-      {phase === "turn-end" && (
+      {phase === "turn-end" && currentResult && (
         <div className="mx-auto flex max-w-lg flex-col items-center gap-6 text-center">
           <p className="text-3xl font-black text-nog-black">{endMessage}</p>
+
+          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatPill label="Score" value={`${currentResult.score}`} />
+            <StatPill label="Attempted" value={`${currentResult.total}`} />
+            <StatPill label="Correct" value={`${currentResult.correct}`} />
+            <StatPill label="Accuracy" value={`${accuracy}%`} />
+          </div>
+
           <Scoreboard players={results} title="Scores So Far" />
           <button
             onClick={nextPlayerOrResults}
@@ -218,5 +250,14 @@ export default function PressurePointPage() {
         />
       )}
     </main>
+  );
+}
+
+function StatPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-nog-black/5 px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-wide text-nog-black/40">{label}</p>
+      <p className="mt-1 text-2xl font-black text-nog-black">{value}</p>
+    </div>
   );
 }

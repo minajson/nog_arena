@@ -497,7 +497,16 @@ function SpinForm({
 
 /* ------------------------------ Pipeline Puzzle ---------------------------- */
 
-const PIECE_TYPES: PipelinePieceType[] = ["straight-pipe", "elbow-pipe", "valve", "pump", "storage-tank"];
+const PIECE_TYPES: PipelinePieceType[] = [
+  "straight-pipe",
+  "elbow-pipe",
+  "valve",
+  "pump",
+  "storage-tank",
+  "pressure-gauge",
+  "compressor",
+  "final-connector",
+];
 
 function PipelineSection() {
   const sequence = usePipelineSequence();
@@ -673,6 +682,7 @@ function HazardForm({
 /* ------------------------------ Pressure Point ------------------------------ */
 
 const emptyScenarioDraft = (): Omit<Scenario, "id"> => ({
+  bank: "player1",
   prompt: "",
   correctResponse: "",
   wrongOptions: ["", "", ""],
@@ -686,7 +696,13 @@ function ScenarioSection() {
 
   function startEdit(s: Scenario) {
     setEditingId(s.id);
-    setDraft({ prompt: s.prompt, correctResponse: s.correctResponse, wrongOptions: [...s.wrongOptions] as Scenario["wrongOptions"], enabled: s.enabled });
+    setDraft({
+      bank: s.bank,
+      prompt: s.prompt,
+      correctResponse: s.correctResponse,
+      wrongOptions: [...s.wrongOptions] as Scenario["wrongOptions"],
+      enabled: s.enabled,
+    });
   }
   function cancelEdit() {
     setEditingId(null);
@@ -711,7 +727,7 @@ function ScenarioSection() {
 
   return (
     <SectionCard
-      title="Pressure Point Scenarios"
+      title="Pressure Point Scenarios (Player 1 / Player 2 sets)"
       count={scenarios.length}
       onAdd={() => {
         setEditingId("new");
@@ -729,7 +745,12 @@ function ScenarioSection() {
           ) : (
             <li key={s.id} className={`rounded-2xl border-2 p-5 ${s.enabled ? "border-nog-black/10" : "border-nog-black/5 opacity-50"}`}>
               <div className="flex items-start justify-between gap-4">
-                <p className="text-lg font-bold text-nog-black">{s.prompt}</p>
+                <div>
+                  <span className="mb-1 inline-block rounded-full bg-nog-black/5 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-nog-black/50">
+                    {s.bank === "player1" ? "Player 1 set" : "Player 2 set"}
+                  </span>
+                  <p className="text-lg font-bold text-nog-black">{s.prompt}</p>
+                </div>
                 <div className="flex shrink-0 gap-2">
                   <IconButton onClick={() => toggleEnabled(s)} active={s.enabled} label={s.enabled ? "Disable" : "Enable"}>
                     <Check size={16} />
@@ -773,6 +794,20 @@ function ScenarioForm({
   }
   return (
     <div className="mb-4 rounded-2xl border-2 border-nog-green-600 bg-nog-green-600/5 p-5">
+      <label className="mb-1 block text-sm font-bold text-nog-black/60">Question set</label>
+      <div className="mb-4 flex gap-2">
+        {(["player1", "player2"] as const).map((bank) => (
+          <button
+            key={bank}
+            onClick={() => setDraft((prev) => ({ ...prev, bank }))}
+            className={`rounded-xl px-4 py-2 text-sm font-bold cursor-pointer ${
+              draft.bank === bank ? "bg-nog-green-700 text-white" : "border-2 border-nog-black/15 text-nog-black/60"
+            }`}
+          >
+            {bank === "player1" ? "Player 1" : "Player 2"}
+          </button>
+        ))}
+      </div>
       <label className="mb-1 block text-sm font-bold text-nog-black/60">Scenario prompt</label>
       <input
         value={draft.prompt}

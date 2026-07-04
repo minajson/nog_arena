@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { PartyPopper, RotateCcw, Sparkles } from "lucide-react";
+import { Disc3, PartyPopper, RotateCcw, Sparkles } from "lucide-react";
 import GameTopBar from "@/components/GameTopBar";
 import SpinWheel from "@/components/SpinWheel";
 import ConfettiCelebration from "@/components/ConfettiCelebration";
+import GameIntro3D from "@/components/GameIntro3D";
 import { useSpinChallenges, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
@@ -28,6 +29,7 @@ const TYPE_LABEL: Record<SpinChallenge["type"], string> = {
 export default function SpinAndSparkPage() {
   const allChallenges = useSpinChallenges();
   const settings = useSettings();
+  const [phase, setPhase] = useState<"intro" | "playing">("intro");
   const [wheel] = useState<SpinChallenge[]>(() => {
     const enabled = allChallenges.filter((c) => c.enabled);
     const count = Math.min(settings.spinNumberOfChallenges, enabled.length) || enabled.length;
@@ -72,9 +74,28 @@ export default function SpinAndSparkPage() {
 
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
-      <GameTopBar title="Spin & Spark" />
+      {phase === "intro" && (
+        <GameIntro3D
+          title="Spin & Spark"
+          icon={Disc3}
+          objective="Spin the wheel for a random challenge — trivia questions, fun tasks, or a mystery blank slot."
+          players="Whole Room"
+          timer="No timer — facilitator paced"
+          howToPlay={[
+            "Click Spin and let the wheel decide your challenge.",
+            "Questions test energy sector knowledge, tasks are just for fun.",
+            "Landing on a blank mystery slot? Just spin again.",
+            "The facilitator judges when a task is completed.",
+          ]}
+          scoring={["No points here — just energy, laughs, and participation!"]}
+          onContinue={() => setPhase("playing")}
+        />
+      )}
+
+      {phase !== "intro" && <GameTopBar title="Spin & Spark" />}
       {celebrate && <ConfettiCelebration active durationMs={3000} />}
 
+      {phase === "playing" && (
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 pb-12">
         <p className="max-w-lg text-center text-lg font-semibold text-nog-black/60">
           Click Spin, let the wheel decide, and bring the energy!
@@ -143,6 +164,7 @@ export default function SpinAndSparkPage() {
           )}
         </AnimatePresence>
       </div>
+      )}
     </main>
   );
 }

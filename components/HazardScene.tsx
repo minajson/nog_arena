@@ -1,48 +1,51 @@
 "use client";
 
-import {
-  HardHat,
-  Droplet,
-  Flame,
-  Zap,
-  Container,
-  Hand,
-  Cable,
-  Droplets,
-  Cigarette,
-  Trash2,
-  Check,
-  X as XIcon,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { Hazard } from "@/data/hazards";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, X as XIcon } from "lucide-react";
+import type { Hazard, DecoySpot } from "@/data/hazards";
 
-const HAZARD_ICONS: Record<string, LucideIcon> = {
-  h1: HardHat,
-  h2: Droplet,
-  h3: Flame,
-  h4: Zap,
-  h5: Container,
-  h6: Hand,
-  h7: Cable,
-  h8: Droplets,
-  h9: Cigarette,
-  h10: Trash2,
-};
+interface FeedbackMarker {
+  key: number;
+  x: number;
+  y: number;
+  correct: boolean;
+}
 
 interface HazardSceneProps {
   hazards: Hazard[];
+  decoys: DecoySpot[];
   found: Set<string>;
-  missed: Set<string>;
-  onHazardClick: (id: string) => void;
-  onBackgroundClick: () => void;
+  hintHazardId: string | null;
+  mildClues: boolean;
+  onHazardClick: (id: string, x: number, y: number) => void;
+  onDecoyClick: (x: number, y: number) => void;
+  onBackgroundMiss: () => void;
 }
 
-export default function HazardScene({ hazards, found, missed, onHazardClick, onBackgroundClick }: HazardSceneProps) {
+export default function HazardScene({
+  hazards,
+  decoys,
+  found,
+  hintHazardId,
+  mildClues,
+  onHazardClick,
+  onDecoyClick,
+  onBackgroundMiss,
+}: HazardSceneProps) {
+  const [markers, setMarkers] = useState<FeedbackMarker[]>([]);
+  const keyRef = useRef(0);
+
+  function addMarker(x: number, y: number, correct: boolean) {
+    const key = keyRef.current++;
+    setMarkers((prev) => [...prev, { key, x, y, correct }]);
+    setTimeout(() => setMarkers((prev) => prev.filter((m) => m.key !== key)), 850);
+  }
+
   return (
     <div
-      onClick={onBackgroundClick}
-      className="relative aspect-[5/3] w-full overflow-hidden rounded-3xl border-2 border-nog-black/10 shadow-md"
+      onClick={onBackgroundMiss}
+      className="relative aspect-[5/3] w-full cursor-crosshair overflow-hidden rounded-3xl border-2 border-nog-black/10 shadow-md"
     >
       <svg viewBox="0 0 1000 600" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid slice">
         <rect width="1000" height="600" fill="#eaf6ef" />
@@ -61,31 +64,67 @@ export default function HazardScene({ hazards, found, missed, onHazardClick, onB
       </svg>
 
       {hazards.map((hazard) => {
-        const Icon = HAZARD_ICONS[hazard.id] ?? Droplet;
         const isFound = found.has(hazard.id);
-        const isMissed = missed.has(hazard.id);
+        const isHinted = hintHazardId === hazard.id;
+        const hitSize = hazard.nearMiss ? "h-9 w-9 sm:h-10 sm:w-10" : "h-12 w-12 sm:h-14 sm:w-14";
         return (
           <button
             key={hazard.id}
             onClick={(e) => {
               e.stopPropagation();
-              onHazardClick(hazard.id);
+              if (isFound) return;
+              addMarker(hazard.x, hazard.y, true);
+              onHazardClick(hazard.id, hazard.x, hazard.y);
             }}
             disabled={isFound}
             style={{ left: `${hazard.x}%`, top: `${hazard.y}%` }}
-            className={`absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-lg transition-colors sm:h-14 sm:w-14 ${
+            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all ${hitSize} ${
               isFound
-                ? "border-nog-green-600 bg-nog-green-600 text-white"
-                : isMissed
-                  ? "border-red-500 bg-red-500 text-white"
-                  : "animate-pulse border-nog-gold-500 bg-white/90 text-nog-gold-700 hover:scale-110 cursor-pointer"
+                ? "bg-nog-green-600/20 ring-2 ring-nog-green-600"
+                : isHinted
+                  ? "animate-pulse bg-nog-gold-400/25 ring-4 ring-nog-gold-400"
+                  : mildClues
+                    ? "cursor-pointer bg-nog-gold-400/10 opacity-50 hover:bg-nog-gold-400/25 hover:opacity-100 hover:ring-2 hover:ring-nog-gold-400"
+                    : "cursor-pointer opacity-0 hover:bg-white/20 hover:opacity-100 hover:ring-2 hover:ring-nog-gold-400"
             }`}
-            aria-label={hazard.label}
-          >
-            {isFound ? <Check size={22} /> : isMissed ? <XIcon size={22} /> : <Icon size={22} />}
-          </button>
+            aria-label="hidden hotspot"
+          />
         );
       })}
+
+      {decoys.map((decoy) => (
+        <button
+          key={decoy.id}
+          onClick={(e) => {
+            e.stopPropagation();
+            addMarker(decoy.x, decoy.y, false);
+            onDecoyClick(decoy.x, decoy.y);
+          }}
+          style={{ left: `${decoy.x}%`, top: `${decoy.y}%` }}
+          className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full opacity-0 transition-all hover:bg-white/10 hover:opacity-100 hover:ring-2 hover:ring-red-300"
+          aria-label="decoy"
+        />
+      ))}
+
+      <AnimatePresence>
+        {markers.map((m) => (
+          <motion.div
+            key={m.key}
+            initial={{ opacity: 1, scale: 0.6 }}
+            animate={{ opacity: 0, scale: 1.4 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.85 }}
+            style={{ left: `${m.x}%`, top: `${m.y}%` }}
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+          >
+            {m.correct ? (
+              <Check className="text-nog-green-600" size={30} />
+            ) : (
+              <XIcon className="text-red-600" size={30} />
+            )}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

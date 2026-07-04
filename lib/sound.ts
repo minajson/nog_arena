@@ -10,7 +10,9 @@ export type SoundName =
   | "tryAgain"
   | "celebration"
   | "buzz"
-  | "blank";
+  | "blank"
+  | "buzzerEnd"
+  | "hint";
 
 const SOUND_SRC: Record<SoundName, string> = {
   tick: "/sounds/tick.wav",
@@ -22,6 +24,8 @@ const SOUND_SRC: Record<SoundName, string> = {
   celebration: "/sounds/winner.wav",
   buzz: "/sounds/tick.wav",
   blank: "/sounds/wrong.wav",
+  buzzerEnd: "/sounds/wrong.wav",
+  hint: "/sounds/tick.wav",
 };
 
 const cache = new Map<SoundName, Howl>();

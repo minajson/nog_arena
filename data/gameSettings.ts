@@ -14,7 +14,6 @@ export interface GameSettings {
 
   hazardTimePerPlayer: number;
   hazardWarningThreshold: number;
-  hazardNumberOfHazards: number;
 
   pressureTimePerPlayer: number;
   pressureWarningThreshold: number;
@@ -37,7 +36,6 @@ export const defaultGameSettings: GameSettings = {
 
   hazardTimePerPlayer: 60,
   hazardWarningThreshold: 15,
-  hazardNumberOfHazards: 10,
 
   pressureTimePerPlayer: 45,
   pressureWarningThreshold: 15,
@@ -69,7 +67,6 @@ export const SETTINGS_FIELDS: SettingField[] = [
 
   { key: "hazardTimePerPlayer", label: "Time per player", unit: "sec", min: 20, max: 180, step: 10, game: "Hazard Hunt" },
   { key: "hazardWarningThreshold", label: "Warning sound threshold", unit: "sec left", min: 3, max: 30, step: 1, game: "Hazard Hunt" },
-  { key: "hazardNumberOfHazards", label: "Number of hazards", unit: "hazards", min: 3, max: 10, step: 1, game: "Hazard Hunt" },
 
   { key: "pressureTimePerPlayer", label: "Time per player", unit: "sec", min: 15, max: 120, step: 5, game: "Pressure Point" },
   { key: "pressureWarningThreshold", label: "Warning sound threshold", unit: "sec left", min: 3, max: 30, step: 1, game: "Pressure Point" },

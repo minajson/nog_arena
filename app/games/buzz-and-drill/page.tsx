@@ -8,7 +8,7 @@ import Timer from "@/components/Timer";
 import Scoreboard from "@/components/Scoreboard";
 import PlayerSetup from "@/components/PlayerSetup";
 import WinnerScreen from "@/components/WinnerScreen";
-import VideoIntro from "@/components/VideoIntro";
+import GameIntro3D from "@/components/GameIntro3D";
 import GameTopBar from "@/components/GameTopBar";
 import { useBuzzQuestions, useSettings } from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
@@ -133,16 +133,27 @@ export default function BuzzAndDrillPage() {
 
   return (
     <main className="relative min-h-screen bg-white px-6 py-8">
-      <AnimatePresence mode="wait">
-        {phase === "intro" && (
-          <VideoIntro
-            key="intro"
-            src="/videos/game-intro.mp4"
-            label="Buzz and Drill Intro"
-            onEnd={() => setPhase("setup")}
-          />
-        )}
-      </AnimatePresence>
+      {phase === "intro" && (
+        <GameIntro3D
+          title="Buzz and Drill"
+          icon={Zap}
+          objective="Answer fast, outscore your opponent in this head-to-head trivia buzzer round."
+          players="2 Players"
+          timer={`${settings.buzzTimePerQuestion}s per question`}
+          howToPlay={[
+            "The facilitator taps whichever player buzzed in first.",
+            "Only that player gets to answer the question.",
+            "A wrong answer passes the same question to the other player.",
+            "If both players miss it, the correct answer is revealed and play moves on.",
+          ]}
+          scoring={[
+            `Each correct answer is worth ${settings.buzzPointsPerCorrect} point${settings.buzzPointsPerCorrect === 1 ? "" : "s"}.`,
+            "A wrong answer scores nothing.",
+            "Most points after all questions wins.",
+          ]}
+          onContinue={() => setPhase("setup")}
+        />
+      )}
 
       {phase !== "intro" && <GameTopBar title="Buzz and Drill" />}
 
