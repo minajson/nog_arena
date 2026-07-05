@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Scoreboard from "./Scoreboard";
 import WinnerCelebration from "./WinnerCelebration";
+import VideoBackdrop from "./VideoBackdrop";
 import { decideWinner, type PlayerResult } from "@/lib/scoring";
 import { playSound } from "@/lib/sound";
 import { addLeaderboardEntry } from "@/lib/store";
@@ -34,7 +35,8 @@ export default function WinnerScreen({ game, players, subtitle, onPlayAgain, onE
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="relative flex flex-col items-center gap-8">
+      <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
       <WinnerCelebration
         winnerNames={winners.map((w) => w.name)}
         tie={tie}

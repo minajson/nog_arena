@@ -132,14 +132,14 @@ export default function PressurePointPage() {
   }
 
   function exitToMenu() {
-    router.push("/");
+    router.push("/menu");
   }
 
   const currentResult = results[playerIndex];
   const accuracy = currentResult && currentResult.total > 0 ? Math.round((currentResult.correct / currentResult.total) * 100) : 0;
 
   return (
-    <main className="relative min-h-screen bg-white px-6 py-8">
+    <main className="relative bg-white px-4 py-3 lg:px-6 lg:py-4">
       <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D

@@ -149,11 +149,11 @@ export default function BuzzAndDrillPage() {
   }
 
   function exitToMenu() {
-    router.push("/");
+    router.push("/menu");
   }
 
   return (
-    <main className="relative min-h-screen bg-white px-6 py-8">
+    <main className="relative bg-white px-4 py-3 lg:px-6 lg:py-4">
       <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D

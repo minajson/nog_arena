@@ -179,7 +179,7 @@ export default function PipelinePuzzlePage() {
   }
 
   function exitToMenu() {
-    router.push("/");
+    router.push("/menu");
   }
 
   function renderSlot(i: number) {
@@ -199,16 +199,16 @@ export default function PipelinePuzzlePage() {
               : { x: 0, scale: 1 }
         }
         transition={isFlowLit ? { delay: i * 0.05, duration: 0.4 } : undefined}
-        className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:h-20 sm:w-20 sm:text-[11px] lg:h-24 lg:w-24 lg:gap-1.5 lg:text-sm xl:h-28 xl:w-28 xl:text-base ${
+        className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:h-20 sm:w-20 sm:text-[11px] lg:h-22 lg:w-22 lg:gap-1.5 lg:text-sm ${
           filled
             ? `border-nog-green-600 bg-nog-green-600/10 text-nog-green-800 ${isGlowing || isFlowLit ? "shadow-[0_0_0_6px_rgba(15,148,85,0.25)]" : ""}`
             : "border-dashed border-nog-black/20 text-nog-black/30 hover:border-nog-green-500"
         }`}
       >
         {Icon ? (
-          <Icon className="size-4.5 sm:size-6 lg:size-8 xl:size-9" />
+          <Icon className="size-4.5 sm:size-6 lg:size-7" />
         ) : (
-          <span className="text-base sm:text-lg lg:text-2xl">?</span>
+          <span className="text-base sm:text-lg lg:text-xl">?</span>
         )}
         <span className="leading-none">{filled ? PIPELINE_PIECE_LABELS[filled] : i + 1}</span>
       </motion.button>
@@ -222,7 +222,7 @@ export default function PipelinePuzzlePage() {
     breakdown.timeBonus;
 
   return (
-    <main className="relative min-h-screen bg-white px-6 py-8">
+    <main className="relative bg-white px-4 py-3 lg:px-6 lg:py-4">
       <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D
@@ -257,11 +257,8 @@ export default function PipelinePuzzlePage() {
       )}
 
       {phase === "playing" && (
-        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-6 2xl:gap-8">
-          <h2 className="text-center text-3xl font-black text-nog-black lg:text-4xl xl:text-5xl">
-            Pipeline Puzzle
-          </h2>
-          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
+        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-2 lg:gap-3">
+          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-1 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-1.5 lg:text-xl">
             {players[playerIndex]}&apos;s Turn
           </span>
 
@@ -274,66 +271,66 @@ export default function PipelinePuzzlePage() {
             warningThreshold={settings.pipelineWarningThreshold}
           />
 
-          <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start 2xl:gap-8">
-            <div className="relative flex flex-1 flex-col items-center gap-1 rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md sm:gap-2 sm:p-6 lg:gap-3 lg:p-8 xl:p-10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6 xl:gap-8">
+            <div className="relative flex flex-1 flex-col items-center gap-1 rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md sm:gap-2 sm:p-6 lg:gap-2 lg:p-5">
               <BurstEffect active={restoredBurst} color="gold" label="Pipeline Restored!" />
-              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 <PipelineNode icon={Fuel} label="Oil Well" />
                 {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
-                    <ArrowRight className="text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-2">
+                    <ArrowRight className="text-nog-black/20 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-end pr-4 sm:pr-8">
-                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
               </div>
 
-              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 {[4, 5, 6, 7].map((i) => (
-                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
-                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-2">
+                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-start pl-4 sm:pl-8">
-                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
               </div>
 
-              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 {[8, 9, 10, 11].map((i) => (
-                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
-                    {i !== 8 && <ArrowRight className="text-nog-black/20 lg:size-5 xl:size-6" size={14} />}
+                  <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-2">
+                    {i !== 8 && <ArrowRight className="text-nog-black/20 lg:size-5" size={14} />}
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-end pr-4 sm:pr-8">
-                <ArrowDown className="text-nog-black/20 lg:size-6 xl:size-7" size={18} />
+                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
               </div>
 
-              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
+              <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 <PipelineNode icon={Factory} label="Processing Facility" />
                 {[12, 13, 14].map((i) => (
-                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4">
-                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5 xl:size-6" size={14} />
+                  <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-2">
+                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-col gap-6 2xl:w-100 2xl:shrink-0">
-              <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-6 shadow-md lg:p-8">
-                <p className="mb-3 text-center text-base font-bold uppercase tracking-wide text-nog-black/50 lg:text-lg">
+            <div className="flex flex-col gap-3 lg:w-80 lg:shrink-0 xl:w-96 2xl:w-100">
+              <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md lg:p-4">
+                <p className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-nog-black/50">
                   Tap a piece, then tap the slot to place it
                 </p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 lg:gap-4 2xl:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 lg:gap-2 lg:max-h-48 lg:overflow-y-auto">
                   {tray.map((tile) => {
                     const Icon = PIECE_ICONS[tile.type];
                     const isSelected = selectedTile === tile.id;
@@ -341,13 +338,13 @@ export default function PipelinePuzzlePage() {
                       <button
                         key={tile.id}
                         onClick={() => setSelectedTile(isSelected ? null : tile.id)}
-                        className={`flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 px-4 py-4 text-sm font-bold cursor-pointer transition-colors lg:min-h-28 lg:text-base ${
+                        className={`flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-sm font-bold cursor-pointer transition-colors lg:min-h-18 lg:px-2 lg:py-2 lg:text-xs ${
                           isSelected
                             ? "border-nog-gold-500 bg-nog-gold-500/15 text-nog-gold-700 ring-4 ring-nog-gold-500/30"
                             : "border-nog-black/15 text-nog-black/70 hover:border-nog-green-600"
                         }`}
                       >
-                        <Icon className="size-7 lg:size-9" />
+                        <Icon className="size-6 lg:size-5" />
                         {PIPELINE_PIECE_LABELS[tile.type]}
                       </button>
                     );
@@ -426,11 +423,11 @@ export default function PipelinePuzzlePage() {
 
 function PipelineNode({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex shrink-0 flex-col items-center gap-1 lg:gap-2">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28">
-        <Icon className="size-5.5 sm:size-7.5 lg:size-9 xl:size-10" />
+    <div className="flex shrink-0 flex-col items-center gap-1 lg:gap-1.5">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 sm:h-20 sm:w-20 lg:h-22 lg:w-22">
+        <Icon className="size-5.5 sm:size-7.5 lg:size-8" />
       </div>
-      <span className="max-w-20 text-center text-[10px] font-bold text-nog-black/70 sm:text-xs lg:max-w-28 lg:text-sm xl:text-base">
+      <span className="max-w-20 text-center text-[10px] font-bold text-nog-black/70 sm:text-xs lg:max-w-24 lg:text-sm">
         {label}
       </span>
     </div>
