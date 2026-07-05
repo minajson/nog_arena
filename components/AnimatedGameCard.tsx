@@ -52,7 +52,7 @@ export default function AnimatedGameCard({ game, icon: Icon, index }: AnimatedGa
         whileHover={{ scale: 1.06, z: 40 }}
         whileTap={{ scale: 0.97 }}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d", perspective: 1000 }}
-        className="btn-shine group/card relative flex w-full flex-col items-start gap-4 overflow-hidden rounded-3xl border-2 border-nog-black/10 bg-white p-8 text-left shadow-md hover:border-nog-green-600 hover:shadow-[0_30px_70px_-15px_rgba(15,148,85,0.4)] transition-[border-color,box-shadow] cursor-pointer xl:p-10"
+        className="btn-shine group/card relative flex h-full w-full flex-col items-start gap-4 overflow-hidden rounded-3xl border-2 border-nog-black/10 bg-white p-7 text-left shadow-[0_18px_40px_-14px_rgba(10,10,10,0.3)] hover:border-nog-green-600 hover:shadow-[0_30px_70px_-15px_rgba(15,148,85,0.4)] transition-[border-color,box-shadow] cursor-pointer 2xl:p-8"
       >
         <motion.span
           aria-hidden
@@ -66,17 +66,17 @@ export default function AnimatedGameCard({ game, icon: Icon, index }: AnimatedGa
 
         <div
           style={{ transform: "translateZ(40px)" }}
-          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 shadow-lg shadow-nog-green-900/20 transition-colors group-hover/card:bg-nog-green-700 xl:h-20 xl:w-20"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 shadow-lg shadow-nog-green-900/20 transition-colors group-hover/card:bg-nog-green-700 2xl:h-20 2xl:w-20"
         >
-          <Icon size={32} strokeWidth={2.25} className="xl:size-10" />
+          <Icon size={32} strokeWidth={2.25} className="2xl:size-10" />
         </div>
         <div style={{ transform: "translateZ(24px)" }}>
-          <h3 className="text-2xl font-black text-nog-black xl:text-3xl">{game.name}</h3>
-          <p className="mt-1 text-base font-medium text-nog-black/60 xl:text-lg">{game.tagline}</p>
+          <h3 className="text-2xl font-black text-nog-black 2xl:text-3xl">{game.name}</h3>
+          <p className="mt-1.5 text-base font-medium text-nog-black/60 2xl:text-lg">{game.tagline}</p>
         </div>
         <span
           style={{ transform: "translateZ(16px)" }}
-          className="mt-auto flex items-center gap-1.5 text-lg font-bold text-nog-green-700 group-hover/card:text-nog-green-800 xl:text-xl"
+          className="mt-auto flex items-center gap-1.5 pt-2 text-lg font-bold text-nog-green-700 group-hover/card:text-nog-green-800 2xl:text-xl"
         >
           Play Now
           <span className="inline-block transition-transform group-hover/card:translate-x-1.5">→</span>

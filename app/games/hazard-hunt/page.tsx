@@ -110,6 +110,7 @@ export default function HazardHuntPage() {
     const hazard = activeHazards.find((h) => h.id === id);
     if (!hazard) return;
     playSound("correct");
+    playSound("hazardFound", { volume: 0.4, rate: 1.4 });
     speak(VOICE_LINES.correct);
     const nextFound = new Set(found).add(id);
     setFound(nextFound);
@@ -190,10 +191,10 @@ export default function HazardHuntPage() {
       {phase !== "intro" && <GameTopBar title="Hazard Hunt" />}
 
       {phase === "setup" && (
-        <div className="relative mx-auto flex max-w-xl flex-col gap-6">
+        <div className="relative mx-auto flex w-[92vw] max-w-2xl flex-col gap-6 py-4">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
-          <div className="rounded-3xl border-2 border-nog-black/10 p-6 shadow-sm">
-            <h3 className="mb-4 text-center text-lg font-black text-nog-black">Choose Difficulty</h3>
+          <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-7 shadow-sm">
+            <h3 className="mb-4 text-center text-2xl font-black text-nog-black">Choose Difficulty</h3>
             <div className="grid grid-cols-3 gap-3">
               {(Object.keys(DIFFICULTY_SETTINGS) as HazardDifficulty[]).map((level) => (
                 <button
@@ -205,8 +206,8 @@ export default function HazardHuntPage() {
                       : "border-nog-black/15 text-nog-black/60 hover:border-nog-green-500"
                   }`}
                 >
-                  <span className="block text-base">{DIFFICULTY_LABELS[level]}</span>
-                  <span className="mt-1 block text-xs font-semibold text-nog-black/40">
+                  <span className="block text-xl">{DIFFICULTY_LABELS[level]}</span>
+                  <span className="mt-1 block text-sm font-semibold text-nog-black/40">
                     {DIFFICULTY_SETTINGS[level].hazardCount} hazards
                   </span>
                 </button>
@@ -218,7 +219,7 @@ export default function HazardHuntPage() {
       )}
 
       {phase === "playing" && (
-        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-400 flex-col gap-4 lg:gap-5">
           <div className="flex flex-wrap items-center justify-center gap-3">
             <span className="rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
               {players[playerIndex]}&apos;s Turn — Found {found.size}/{activeHazards.length}
@@ -273,16 +274,16 @@ export default function HazardHuntPage() {
       )}
 
       {phase === "turn-end" && (
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-6 text-center">
-          <p className="text-3xl font-black text-nog-black">{endMessage}</p>
-          <p className="text-lg font-semibold text-nog-black/60">
+        <div className="mx-auto flex w-[92vw] max-w-2xl flex-col items-center gap-6 py-4 text-center">
+          <p className="text-4xl font-black text-nog-black lg:text-5xl">{endMessage}</p>
+          <p className="text-xl font-semibold text-nog-black/60 lg:text-2xl">
             {players[playerIndex]} found {found.size} of {activeHazards.length} hazards
             {hintsUsed > 0 ? ` using ${hintsUsed} hint${hintsUsed === 1 ? "" : "s"}` : ""}.
           </p>
           <Scoreboard players={results} title="Scores So Far" />
           <button
             onClick={nextPlayerOrResults}
-            className="rounded-2xl bg-nog-green-700 px-8 py-4 text-xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
+            className="btn-shine cta-pulse rounded-2xl bg-nog-green-700 px-12 py-5 text-2xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
           >
             {playerIndex === 0 ? "Next Player" : "See Results"}
           </button>

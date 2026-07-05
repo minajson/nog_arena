@@ -35,7 +35,7 @@ export default function WinnerScreen({ game, players, subtitle, onPlayAgain, onE
   }, []);
 
   return (
-    <div className="relative flex flex-col items-center gap-8">
+    <div className="relative flex flex-col items-center gap-8 py-2">
       <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
       <WinnerCelebration
         winnerNames={winners.map((w) => w.name)}
@@ -44,7 +44,7 @@ export default function WinnerScreen({ game, players, subtitle, onPlayAgain, onE
         onPlayAgain={onPlayAgain}
         onExitMenu={onExitMenu}
       />
-      <div className="w-full max-w-2xl">
+      <div className="w-[92vw] max-w-3xl">
         <Scoreboard players={players} title="Final Results" />
       </div>
     </div>

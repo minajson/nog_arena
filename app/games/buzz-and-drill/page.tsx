@@ -180,17 +180,17 @@ export default function BuzzAndDrillPage() {
       {phase !== "intro" && <GameTopBar title="Buzz and Drill" />}
 
       {phase === "setup" && (
-        <div className="relative mx-auto max-w-xl">
+        <div className="relative mx-auto w-[92vw] max-w-2xl py-4">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <PlayerSetup onStart={startGame} fixedCount={2} />
         </div>
       )}
 
       {phase === "playing" && currentQuestion && (
-        <div className="relative mx-auto flex w-[95vw] max-w-300 flex-col gap-6">
+        <div className="relative mx-auto flex w-full max-w-400 flex-col gap-5 lg:gap-6">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <div className="flex items-center justify-between">
-            <span className="rounded-full bg-nog-black/5 px-4 py-2 text-base font-bold text-nog-black/60 lg:text-lg">
+            <span className="rounded-full bg-nog-black/5 px-5 py-2 text-lg font-bold text-nog-black/60 lg:px-6 lg:text-xl">
               Question {questionIndex + 1} of {quiz.length}
             </span>
           </div>

@@ -137,3 +137,132 @@ html {
   background-size: 200% auto;
   animation: shimmer-text 3.5s linear infinite;
 }
+
+/* ---- Industrial ambience (attract screen / menu) ---- */
+
+@keyframes gear-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-gear-spin {
+  animation: gear-spin 14s linear infinite;
+}
+.animate-gear-spin-reverse {
+  animation: gear-spin 18s linear infinite reverse;
+}
+
+/* Pressure-gauge needle sweeping back and forth */
+@keyframes gauge-sweep {
+  0%,
+  100% {
+    transform: rotate(-60deg);
+  }
+  45% {
+    transform: rotate(55deg);
+  }
+  60% {
+    transform: rotate(38deg);
+  }
+  80% {
+    transform: rotate(62deg);
+  }
+}
+.animate-gauge-sweep {
+  transform-origin: 50% 100%;
+  animation: gauge-sweep 5.5s ease-in-out infinite;
+}
+
+/* Green energy flowing along dashed pipe strokes */
+@keyframes energy-flow {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+.animate-energy-flow {
+  animation: energy-flow 6s linear infinite;
+}
+
+/* Slow vertical drift for floating pipes */
+@keyframes pipe-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--pipe-rot, 0deg));
+  }
+  50% {
+    transform: translateY(-18px) rotate(var(--pipe-rot, 0deg));
+  }
+}
+.animate-pipe-drift {
+  animation: pipe-drift 9s ease-in-out infinite;
+}
+
+/* Light particles rising */
+@keyframes particle-rise {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-46vh);
+    opacity: 0;
+  }
+}
+.animate-particle-rise {
+  animation: particle-rise var(--rise-duration, 9s) linear infinite;
+  animation-delay: var(--rise-delay, 0s);
+}
+
+/* Expanding pulse rings around a primary CTA ("tap to begin" feel) */
+@keyframes cta-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(15, 148, 85, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 22px rgba(15, 148, 85, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(15, 148, 85, 0);
+  }
+}
+.cta-pulse {
+  animation: cta-ring 2s cubic-bezier(0.4, 0, 0.4, 1) infinite;
+}
+
+/* Carnival bulbs around the spin wheel rim */
+@keyframes bulb-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 10px 3px rgba(242, 207, 92, 0.9);
+  }
+  50% {
+    opacity: 0.35;
+    box-shadow: 0 0 3px 1px rgba(242, 207, 92, 0.3);
+  }
+}
+.animate-bulb-blink {
+  animation: bulb-blink 1.1s ease-in-out infinite;
+}
+
+/* Ambient glow that breathes behind hero CTAs */
+@keyframes cta-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.animate-cta-glow {
+  animation: cta-glow 2.6s ease-in-out infinite;
+}

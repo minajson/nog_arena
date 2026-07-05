@@ -36,10 +36,10 @@ export default function PlayerSetup({ onStart, maxPlayers = 6, fixedCount }: Pla
       initial={{ opacity: 0, y: 20, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="relative mx-auto w-full max-w-xl rounded-3xl border-2 border-nog-black/10 bg-white p-8 shadow-md lg:p-10"
+      className="relative mx-auto w-full max-w-2xl rounded-3xl border-2 border-nog-black/10 bg-white p-9 shadow-md lg:p-12"
     >
-      <h2 className="mb-1 text-3xl font-black text-nog-black lg:text-4xl">Who&apos;s Playing?</h2>
-      <p className="mb-6 text-base font-medium text-nog-black/60 lg:text-lg">
+      <h2 className="mb-2 text-4xl font-black text-nog-black lg:text-5xl">Who&apos;s Playing?</h2>
+      <p className="mb-7 text-lg font-medium text-nog-black/60 lg:text-xl">
         Enter player or team names to begin.
       </p>
 
@@ -58,7 +58,7 @@ export default function PlayerSetup({ onStart, maxPlayers = 6, fixedCount }: Pla
                 onChange={(e) => updateName(i, e.target.value)}
                 placeholder={`Player ${i + 1} name`}
                 maxLength={24}
-                className="flex-1 rounded-xl border-2 border-nog-black/15 px-4 py-3 text-lg font-semibold outline-none focus:border-nog-green-600"
+                className="flex-1 rounded-xl border-2 border-nog-black/15 px-5 py-4 text-xl font-semibold outline-none focus:border-nog-green-600"
               />
               {!fixedCount && names.length > 1 && (
                 <button
@@ -89,9 +89,9 @@ export default function PlayerSetup({ onStart, maxPlayers = 6, fixedCount }: Pla
         disabled={!canStart}
         whileHover={canStart ? { scale: 1.02 } : undefined}
         whileTap={canStart ? { scale: 0.98 } : undefined}
-        className="btn-shine mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-nog-green-700 py-4 text-xl font-black text-white shadow-lg hover:bg-nog-green-800 hover:shadow-[0_10px_30px_-8px_rgba(15,148,85,0.6)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-[background-color,box-shadow]"
+        className="btn-shine mt-9 flex w-full items-center justify-center gap-3 rounded-2xl bg-nog-green-700 py-5 text-2xl font-black text-white shadow-lg hover:bg-nog-green-800 hover:shadow-[0_10px_30px_-8px_rgba(15,148,85,0.6)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-[background-color,box-shadow]"
       >
-        <Play size={24} /> Start Game
+        <Play size={28} /> Start Game
       </motion.button>
     </motion.div>
   );

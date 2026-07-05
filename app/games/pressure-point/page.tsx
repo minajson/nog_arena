@@ -167,14 +167,14 @@ export default function PressurePointPage() {
       {phase !== "intro" && <GameTopBar title="Pressure Point" />}
 
       {phase === "setup" && (
-        <div className="relative mx-auto max-w-xl">
+        <div className="relative mx-auto w-[92vw] max-w-2xl py-4">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <PlayerSetup onStart={startGame} fixedCount={2} />
         </div>
       )}
 
       {phase === "playing" && currentScenario && (
-        <div className="relative mx-auto flex w-[95vw] max-w-300 flex-col gap-6">
+        <div className="relative mx-auto flex w-full max-w-400 flex-col gap-5 lg:gap-6">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-2 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-3 lg:text-xl">
             {players[playerIndex]}&apos;s Turn — Scenario {scenarioPos + 1} of {queue.length}
@@ -252,10 +252,10 @@ export default function PressurePointPage() {
       )}
 
       {phase === "turn-end" && currentResult && (
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-6 text-center">
-          <p className="text-3xl font-black text-nog-black">{endMessage}</p>
+        <div className="mx-auto flex w-[92vw] max-w-2xl flex-col items-center gap-6 py-4 text-center">
+          <p className="text-4xl font-black text-nog-black lg:text-5xl">{endMessage}</p>
 
-          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-5">
             <StatPill label="Score" value={`${currentResult.score}`} />
             <StatPill label="Attempted" value={`${currentResult.total}`} />
             <StatPill label="Correct" value={`${currentResult.correct}`} />
@@ -265,7 +265,7 @@ export default function PressurePointPage() {
           <Scoreboard players={results} title="Scores So Far" />
           <button
             onClick={nextPlayerOrResults}
-            className="rounded-2xl bg-nog-green-700 px-8 py-4 text-xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
+            className="btn-shine cta-pulse rounded-2xl bg-nog-green-700 px-12 py-5 text-2xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
           >
             {playerIndex === 0 ? "Next Player" : "See Results"}
           </button>
@@ -287,9 +287,9 @@ export default function PressurePointPage() {
 
 function StatPill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-nog-black/5 px-4 py-3">
-      <p className="text-xs font-bold uppercase tracking-wide text-nog-black/40">{label}</p>
-      <p className="mt-1 text-2xl font-black text-nog-black">{value}</p>
+    <div className="rounded-2xl bg-nog-black/5 px-4 py-4">
+      <p className="text-sm font-bold uppercase tracking-wide text-nog-black/40">{label}</p>
+      <p className="mt-1 text-3xl font-black text-nog-black">{value}</p>
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Play, Volume2, VolumeX } from "lucide-react";
 
 interface GameIntroVideoProps {
   src: string;
@@ -16,6 +17,7 @@ const VOLUME = 0.7;
  * loops so it never goes silent/black on its own — only Continue advances the
  * player, so audio is never cut early. */
 export default function GameIntroVideo({ src, onDone }: GameIntroVideoProps) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -63,6 +65,13 @@ export default function GameIntroVideo({ src, onDone }: GameIntroVideoProps) {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-linear-to-t from-black/70 to-transparent"
       />
+
+      <button
+        onClick={() => router.push("/menu")}
+        className="group absolute top-6 left-6 flex items-center gap-2 rounded-full bg-black/35 px-5 py-3 text-base font-bold text-white backdrop-blur-sm hover:bg-black/55 cursor-pointer transition-colors sm:text-lg"
+      >
+        <ArrowLeft size={20} className="transition-transform group-hover:-translate-x-1" /> Back to Menu
+      </button>
 
       {started && (
         <div className="absolute top-6 right-6 flex items-center gap-3 rounded-full bg-black/30 px-4 py-2 backdrop-blur-sm">

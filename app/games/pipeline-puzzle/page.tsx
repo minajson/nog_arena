@@ -129,6 +129,7 @@ export default function PipelinePuzzlePage() {
 
     if (tile.type === sequence[slotIndex]) {
       playSound("correct");
+      playSound("lockIn", { volume: 0.8, rate: 0.5 });
       speak(VOICE_LINES.correct);
       const nextSlots = slots.map((s, i) => (i === slotIndex ? tile.type : s));
       setSlots(nextSlots);
@@ -187,22 +188,29 @@ export default function PipelinePuzzlePage() {
     const Icon = filled ? PIECE_ICONS[filled] : null;
     const isGlowing = glowSlot === i;
     const isFlowLit = flowing && filled !== null;
+    const isShaking = shakeSlot === i;
     return (
       <motion.button
         key={i}
         onClick={() => placePiece(i)}
         animate={
-          shakeSlot === i
+          isShaking
             ? { x: [0, -8, 8, -8, 8, 0] }
             : isGlowing || isFlowLit
               ? { scale: [1, 1.15, 1] }
               : { x: 0, scale: 1 }
         }
         transition={isFlowLit ? { delay: i * 0.05, duration: 0.4 } : undefined}
-        className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:h-20 sm:w-20 sm:text-[11px] lg:h-22 lg:w-22 lg:gap-1.5 lg:text-sm ${
+        className={`flex h-[min(5.5rem,9.2svh)] w-[min(5.5rem,9.2svh)] shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 text-[9px] font-bold cursor-pointer sm:text-[11px] lg:gap-1.5 lg:text-sm ${
           filled
-            ? `border-nog-green-600 bg-nog-green-600/10 text-nog-green-800 ${isGlowing || isFlowLit ? "shadow-[0_0_0_6px_rgba(15,148,85,0.25)]" : ""}`
-            : "border-dashed border-nog-black/20 text-nog-black/30 hover:border-nog-green-500"
+            ? `bg-linear-to-b from-nog-green-500 via-nog-green-700 to-nog-green-900 text-white ${
+                isGlowing || isFlowLit
+                  ? "border-nog-green-400 shadow-[0_0_0_5px_rgba(20,173,99,0.35),0_0_26px_rgba(52,240,140,0.85),inset_0_1px_0_rgba(255,255,255,0.35)]"
+                  : "border-nog-green-500/60 shadow-[0_5px_10px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.35)]"
+              }`
+            : isShaking
+              ? "border-red-500 bg-red-500/25 text-red-200 shadow-[0_0_22px_rgba(239,68,68,0.65),inset_0_3px_9px_rgba(0,0,0,0.5)]"
+              : "border-[#4a524e] bg-black/45 text-white/40 shadow-[inset_0_3px_9px_rgba(0,0,0,0.75),inset_0_-1px_0_rgba(255,255,255,0.07)] hover:border-nog-green-500/80 hover:text-nog-green-400"
         }`}
       >
         {Icon ? (
@@ -222,7 +230,13 @@ export default function PipelinePuzzlePage() {
     breakdown.timeBonus;
 
   return (
-    <main className="relative bg-white px-4 py-3 lg:px-6 lg:py-4">
+    <main
+      className={`relative bg-white px-4 lg:px-6 ${
+        phase === "playing"
+          ? "flex h-[calc(100svh-4rem)] flex-col overflow-hidden py-2"
+          : "py-3 lg:py-4"
+      }`}
+    >
       <AnimatedNOGBackground />
       {phase === "intro" && (
         <GameIntro3D
@@ -250,87 +264,106 @@ export default function PipelinePuzzlePage() {
       {phase !== "intro" && <GameTopBar title="Pipeline Puzzle" />}
 
       {phase === "setup" && (
-        <div className="relative mx-auto max-w-xl">
+        <div className="relative mx-auto w-[92vw] max-w-2xl py-4">
           <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
           <PlayerSetup onStart={startGame} fixedCount={2} />
         </div>
       )}
 
       {phase === "playing" && (
-        <div className="mx-auto flex w-[95vw] max-w-350 flex-col gap-2 lg:gap-3">
-          <span className="mx-auto rounded-full bg-nog-gold-500/20 px-5 py-1 text-lg font-black text-nog-gold-700 lg:px-6 lg:py-1.5 lg:text-xl">
-            {players[playerIndex]}&apos;s Turn
-          </span>
+        <div className="mx-auto flex min-h-0 w-full max-w-400 flex-1 flex-col gap-2 lg:gap-2.5">
+          <div className="flex items-center gap-4 lg:gap-6">
+            <span className="shrink-0 rounded-full bg-nog-gold-500/20 px-5 py-1.5 text-lg font-black text-nog-gold-700 lg:px-7 lg:text-xl">
+              {players[playerIndex]}&apos;s Turn
+            </span>
+            <Timer
+              key={turnKey}
+              compact
+              duration={settings.pipelineTimePerPlayer}
+              isRunning={turnActive}
+              onExpire={() => finishTurn({ ...breakdown, completionBonus: 0, timeBonus: 0, completed: false }, "Time's up!")}
+              onTick={setTimeLeft}
+              warningThreshold={settings.pipelineWarningThreshold}
+            />
+          </div>
 
-          <Timer
-            key={turnKey}
-            duration={settings.pipelineTimePerPlayer}
-            isRunning={turnActive}
-            onExpire={() => finishTurn({ ...breakdown, completionBonus: 0, timeBonus: 0, completed: false }, "Time's up!")}
-            onTick={setTimeLeft}
-            warningThreshold={settings.pipelineWarningThreshold}
-          />
-
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-6 xl:gap-8">
-            <div className="relative flex flex-1 flex-col items-center gap-1 rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md sm:gap-2 sm:p-6 lg:gap-2 lg:p-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-4 xl:gap-6">
+            <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-3xl border-2 border-[#454d49] bg-linear-to-br from-[#333a37] via-[#232927] to-[#161a18] p-3 shadow-[0_25px_50px_-12px_rgba(10,10,10,0.55),inset_0_1px_0_rgba(255,255,255,0.09)] sm:gap-1.5 lg:p-4">
+              {/* brushed-metal texture */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-[0.06]"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(115deg, rgba(255,255,255,0.55) 0px, transparent 1px, transparent 3px)",
+                }}
+              />
+              {/* corner screws */}
+              {["top-3 left-3", "top-3 right-3", "bottom-3 left-3", "bottom-3 right-3"].map((pos) => (
+                <span
+                  key={pos}
+                  aria-hidden
+                  className={`absolute ${pos} h-3 w-3 rounded-full bg-linear-to-br from-[#9aa39e] to-[#3a403d] shadow-[inset_0_1px_2px_rgba(255,255,255,0.5),0_1px_2px_rgba(0,0,0,0.6)]`}
+                />
+              ))}
               <BurstEffect active={restoredBurst} color="gold" label="Pipeline Restored!" />
               <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 <PipelineNode icon={Fuel} label="Oil Well" />
                 {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-2">
-                    <ArrowRight className="text-nog-black/20 lg:size-5" size={14} />
+                    <ArrowRight className="text-nog-gold-500/60 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-end pr-4 sm:pr-8">
-                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
+                <ArrowDown className="text-nog-gold-500/60 lg:size-5" size={18} />
               </div>
 
               <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 {[4, 5, 6, 7].map((i) => (
                   <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-2">
-                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5" size={14} />
+                    <ArrowRight className="rotate-180 text-nog-gold-500/60 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-start pl-4 sm:pl-8">
-                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
+                <ArrowDown className="text-nog-gold-500/60 lg:size-5" size={18} />
               </div>
 
               <div className="flex items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 {[8, 9, 10, 11].map((i) => (
                   <div key={i} className="flex items-center gap-1 sm:gap-2 lg:gap-2">
-                    {i !== 8 && <ArrowRight className="text-nog-black/20 lg:size-5" size={14} />}
+                    {i !== 8 && <ArrowRight className="text-nog-gold-500/60 lg:size-5" size={14} />}
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
 
               <div className="flex w-full justify-end pr-4 sm:pr-8">
-                <ArrowDown className="text-nog-black/20 lg:size-5" size={18} />
+                <ArrowDown className="text-nog-gold-500/60 lg:size-5" size={18} />
               </div>
 
               <div className="flex flex-row-reverse items-center justify-center gap-1 sm:gap-2 lg:gap-2">
                 <PipelineNode icon={Factory} label="Processing Facility" />
                 {[12, 13, 14].map((i) => (
                   <div key={i} className="flex flex-row-reverse items-center gap-1 sm:gap-2 lg:gap-2">
-                    <ArrowRight className="rotate-180 text-nog-black/20 lg:size-5" size={14} />
+                    <ArrowRight className="rotate-180 text-nog-gold-500/60 lg:size-5" size={14} />
                     {renderSlot(i)}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 lg:w-80 lg:shrink-0 xl:w-96 2xl:w-100">
-              <div className="rounded-3xl border-2 border-nog-black/10 bg-white p-4 shadow-md lg:p-4">
-                <p className="mb-2 text-center text-sm font-bold uppercase tracking-wide text-nog-black/50">
+            <div className="flex min-h-0 flex-col gap-2.5 lg:w-76 lg:shrink-0 xl:w-88 2xl:w-100">
+              <div className="flex min-h-0 flex-1 flex-col rounded-3xl border-2 border-nog-black/10 bg-white p-3 shadow-md xl:p-4">
+                <p className="mb-2 text-center text-xs font-bold uppercase tracking-wide text-nog-black/50 xl:text-sm">
                   Tap a piece, then tap the slot to place it
                 </p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 lg:gap-2 lg:max-h-48 lg:overflow-y-auto">
+                <div className="nog-scrollbar grid min-h-0 grid-cols-3 content-start gap-2 overflow-y-auto sm:grid-cols-4 lg:grid-cols-3">
                   {tray.map((tile) => {
                     const Icon = PIECE_ICONS[tile.type];
                     const isSelected = selectedTile === tile.id;
@@ -338,13 +371,13 @@ export default function PipelinePuzzlePage() {
                       <button
                         key={tile.id}
                         onClick={() => setSelectedTile(isSelected ? null : tile.id)}
-                        className={`flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3 text-sm font-bold cursor-pointer transition-colors lg:min-h-18 lg:px-2 lg:py-2 lg:text-xs ${
+                        className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-2 py-2 text-xs font-bold cursor-pointer transition-all xl:min-h-18 xl:text-sm ${
                           isSelected
-                            ? "border-nog-gold-500 bg-nog-gold-500/15 text-nog-gold-700 ring-4 ring-nog-gold-500/30"
-                            : "border-nog-black/15 text-nog-black/70 hover:border-nog-green-600"
+                            ? "border-nog-gold-500 bg-linear-to-b from-nog-gold-400/35 to-nog-gold-500/20 text-nog-gold-700 ring-4 ring-nog-gold-500/30 shadow-[0_4px_10px_rgba(224,184,60,0.35)]"
+                            : "border-[#c3cbc7] bg-linear-to-b from-white via-[#eef1ef] to-[#d3d9d6] text-nog-black/75 shadow-[0_3px_6px_rgba(10,10,10,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] hover:-translate-y-0.5 hover:border-nog-green-600"
                         }`}
                       >
-                        <Icon className="size-6 lg:size-5" />
+                        <Icon className="size-5 xl:size-6" />
                         {PIPELINE_PIECE_LABELS[tile.type]}
                       </button>
                     );
@@ -355,22 +388,22 @@ export default function PipelinePuzzlePage() {
                 </div>
               </div>
 
-              <Scoreboard players={results} title="Live Scores" />
+              <Scoreboard players={results} title="Live Scores" compact />
             </div>
           </div>
         </div>
       )}
 
       {phase === "turn-end" && (
-        <div className="relative mx-auto flex max-w-lg flex-col items-center gap-6 text-center">
+        <div className="relative mx-auto flex w-[92vw] max-w-2xl flex-col items-center gap-6 py-4 text-center">
           {celebrating && <ConfettiCelebration active durationMs={3000} />}
-          <p className="text-3xl font-black text-nog-black">{endMessage}</p>
+          <p className="text-4xl font-black text-nog-black lg:text-5xl">{endMessage}</p>
 
-          <div className="w-full rounded-3xl border-2 border-nog-black/10 p-6 text-left shadow-sm">
-            <h3 className="mb-3 text-center text-lg font-black uppercase tracking-wide text-nog-black/60">
+          <div className="w-full rounded-3xl border-2 border-nog-black/10 bg-white p-7 text-left shadow-sm lg:p-9">
+            <h3 className="mb-4 text-center text-xl font-black uppercase tracking-wide text-nog-black/60 lg:text-2xl">
               Score Breakdown
             </h3>
-            <div className="flex flex-col gap-2 text-base font-semibold text-nog-black/70">
+            <div className="flex flex-col gap-3 text-lg font-semibold text-nog-black/70 lg:text-xl">
               <div className="flex justify-between">
                 <span>Correct pieces ({breakdown.correctCount} × {PIPELINE_SCORING.correctPiece})</span>
                 <span className="font-black text-nog-green-700">
@@ -391,7 +424,7 @@ export default function PipelinePuzzlePage() {
                 <span>Time bonus</span>
                 <span className="font-black text-nog-gold-600">+{breakdown.timeBonus}</span>
               </div>
-              <div className="mt-2 flex justify-between border-t-2 border-nog-black/10 pt-2 text-xl">
+              <div className="mt-2 flex justify-between border-t-2 border-nog-black/10 pt-3 text-2xl lg:text-3xl">
                 <span className="font-black text-nog-black">Turn Total</span>
                 <span className="font-black text-nog-black">{totalTurnScore}</span>
               </div>
@@ -401,7 +434,7 @@ export default function PipelinePuzzlePage() {
           <Scoreboard players={results} title="Scores So Far" />
           <button
             onClick={nextPlayerOrResults}
-            className="rounded-2xl bg-nog-green-700 px-8 py-4 text-xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
+            className="btn-shine cta-pulse rounded-2xl bg-nog-green-700 px-12 py-5 text-2xl font-black text-white hover:bg-nog-green-800 cursor-pointer"
           >
             {playerIndex === 0 ? "Next Player" : "See Results"}
           </button>
@@ -424,10 +457,10 @@ export default function PipelinePuzzlePage() {
 function PipelineNode({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
     <div className="flex shrink-0 flex-col items-center gap-1 lg:gap-1.5">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-nog-green-800 text-nog-gold-400 sm:h-20 sm:w-20 lg:h-22 lg:w-22">
-        <Icon className="size-5.5 sm:size-7.5 lg:size-8" />
+      <div className="flex h-[min(5.5rem,9.2svh)] w-[min(5.5rem,9.2svh)] items-center justify-center rounded-2xl border border-nog-green-500/40 bg-linear-to-b from-nog-green-600 via-nog-green-800 to-nog-green-950 text-nog-gold-400 shadow-[0_5px_0_#04241a,0_9px_16px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.3)]">
+        <Icon className="size-5.5 drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)] sm:size-7.5 lg:size-8" />
       </div>
-      <span className="max-w-20 text-center text-[10px] font-bold text-nog-black/70 sm:text-xs lg:max-w-24 lg:text-sm">
+      <span className="max-w-20 text-center text-[10px] font-bold text-white/75 sm:text-xs lg:max-w-24 lg:text-sm">
         {label}
       </span>
     </div>

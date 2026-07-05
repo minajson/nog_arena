@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import Header from "@/components/Header";
+import RefreshRedirect from "@/components/RefreshRedirect";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white text-nog-black">
+        <RefreshRedirect />
         <Header />
         {children}
       </body>
