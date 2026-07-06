@@ -10,7 +10,14 @@ import GameIntro3D from "@/components/GameIntro3D";
 import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
 import VideoBackdrop from "@/components/VideoBackdrop";
 import BurstEffect from "@/components/BurstEffect";
-import { useSpinChallenges, useSettings } from "@/lib/store";
+import {
+  useSpinChallenges,
+  useSettings,
+  useUsedSpinChallengeIds,
+  getUsedSpinChallengeSnapshot,
+  markSpinChallengeUsed,
+  resetUsedSpinChallenges,
+} from "@/lib/store";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound, startSpinWhoosh, stopSpinWhoosh } from "@/lib/sound";
 import { speak, VOICE_LINES } from "@/lib/speech";
@@ -41,14 +48,35 @@ export default function SpinAndSparkPage() {
   });
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [landedIndex, setLandedIndex] = useState<number | null>(null);
+  const [landedChallenge, setLandedChallenge] = useState<SpinChallenge | null>(null);
   const [celebrate, setCelebrate] = useState(false);
 
-  const landed = landedIndex !== null ? wheel[landedIndex] : null;
+  // Every landed challenge is remembered for the whole event so it never comes
+  // up twice, until a facilitator resets the pool.
+  const usedIds = useUsedSpinChallengeIds();
+
+  function resetPool() {
+    resetUsedSpinChallenges();
+    setLandedChallenge(null);
+  }
+
+  function remainingChallenges() {
+    const used = new Set(getUsedSpinChallengeSnapshot());
+    return allChallenges.filter((c) => c.enabled && c.type !== "blank" && !used.has(c.id));
+  }
+
+  const landed = landedChallenge;
+  const exhausted = allChallenges.every(
+    (c) => !c.enabled || c.type === "blank" || usedIds.includes(c.id)
+  );
 
   function spin() {
     if (spinning || wheel.length === 0) return;
-    setLandedIndex(null);
+    if (remainingChallenges().length === 0) {
+      setLandedChallenge(null);
+      return;
+    }
+    setLandedChallenge(null);
     setCelebrate(false);
     setSpinning(true);
     startSpinWhoosh(3.9);
@@ -66,10 +94,25 @@ export default function SpinAndSparkPage() {
 
     setTimeout(() => {
       stopSpinWhoosh();
-      setLandedIndex(index);
+      const landedSlice = wheel[index];
+      let result = landedSlice;
+      if (landedSlice.type !== "blank") {
+        // The wheel slices are just colors — swap in an unused challenge if
+        // this slice's challenge has already been played this event.
+        const used = new Set(getUsedSpinChallengeSnapshot());
+        const pool = remainingChallenges();
+        if (pool.length > 0) {
+          result =
+            landedSlice.enabled && !used.has(landedSlice.id)
+              ? landedSlice
+              : pool[Math.floor(Math.random() * pool.length)];
+        }
+        markSpinChallengeUsed(result.id);
+      }
+      setLandedChallenge(result);
       setSpinning(false);
       playSound("spinStop", { volume: 0.7, rate: 0.45 });
-      playSound(wheel[index].type === "blank" ? "blank" : "buzz");
+      playSound(result.type === "blank" ? "blank" : "buzz");
     }, 3900);
   }
 
@@ -87,14 +130,14 @@ export default function SpinAndSparkPage() {
         <GameIntro3D
           title="Spin & Spark"
           icon={Disc3}
-          objective="Spin the wheel for a random challenge — trivia questions, fun tasks, or a mystery blank slot."
+          objective="Spin the wheel for a random challenge — funny dares, emoji riddles, impressions and guess-the-thing games. Pure entertainment."
           players="Whole Room"
           timer="No timer — facilitator paced"
           howToPlay={[
-            "Click Spin and let the wheel decide your challenge.",
-            "Questions test energy sector knowledge, tasks are just for fun.",
+            "Hit SPIN and let the wheel decide your challenge.",
+            "Expect dares, accents, dances, riddles — anything for a laugh.",
+            "Every challenge appears only once per event — no repeats!",
             "Landing on a blank mystery slot? Just spin again.",
-            "The facilitator judges when a task is completed.",
           ]}
           scoring={["No points here — just energy, laughs, and participation!"]}
           onContinue={() => setPhase("playing")}
@@ -107,24 +150,53 @@ export default function SpinAndSparkPage() {
       {phase === "playing" && (
       <div className="relative mx-auto flex w-full max-w-400 flex-col items-center gap-6 pb-8">
         <VideoBackdrop src="/videos/oil-gas-loop.mp4" opacityClassName="opacity-10" />
-        <p className="max-w-xl text-center text-xl font-semibold text-nog-black/60 lg:max-w-2xl lg:text-2xl">
-          Click Spin, let the wheel decide, and bring the energy!
-        </p>
+        {exhausted ? (
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: "spring", stiffness: 240, damping: 20 }}
+            className="relative mt-10 w-full max-w-3xl overflow-hidden rounded-[2rem] border-2 border-nog-gold-500/40 bg-white p-12 text-center shadow-[0_35px_70px_-20px_rgba(10,10,10,0.35)] lg:p-16"
+          >
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-nog-green-600 via-nog-gold-500 to-nog-green-600 animate-shimmer-text"
+            />
+            <p className="text-7xl">🎉</p>
+            <p className="mt-5 text-4xl font-black text-nog-black lg:text-5xl">
+              Every challenge has been completed!
+            </p>
+            <p className="mt-4 text-xl font-semibold text-nog-black/60 lg:text-2xl">
+              Come back later for another round.
+            </p>
+            <button
+              onClick={resetPool}
+              className="mx-auto mt-9 flex items-center gap-2 rounded-full border-2 border-nog-black/15 px-7 py-3.5 text-lg font-bold text-nog-black/50 hover:border-nog-green-600 hover:text-nog-green-700 cursor-pointer transition-colors"
+            >
+              <RotateCcw size={20} /> Reset Challenges (Facilitator)
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <p className="max-w-xl text-center text-xl font-semibold text-nog-black/60 lg:max-w-2xl lg:text-2xl">
+              Click Spin, let the wheel decide, and bring the energy!
+            </p>
 
-        <div className="relative pt-2">
-          <BurstEffect active={celebrate} color="gold" label="Awesome!" />
-          <SpinWheel
-            colors={wheel.map((_, i) => WHEEL_COLORS[i % WHEEL_COLORS.length])}
-            rotation={rotation}
-            onSpinEnd={() => {}}
-            onSpin={spin}
-            spinning={spinning}
-          />
-        </div>
+            <div className="relative pt-2">
+              <BurstEffect active={celebrate} color="gold" label="Awesome!" />
+              <SpinWheel
+                colors={wheel.map((_, i) => WHEEL_COLORS[i % WHEEL_COLORS.length])}
+                rotation={rotation}
+                onSpinEnd={() => {}}
+                onSpin={spin}
+                spinning={spinning}
+              />
+            </div>
 
-        <p className="text-lg font-bold uppercase tracking-[0.25em] text-nog-black/40 lg:text-xl">
-          {spinning ? "Spinning…" : "Hit SPIN in the center"}
-        </p>
+            <p className="text-lg font-bold uppercase tracking-[0.25em] text-nog-black/40 lg:text-xl">
+              {spinning ? "Spinning…" : "Hit SPIN in the center"}
+            </p>
+          </>
+        )}
 
         <AnimatePresence>
           {landed && !spinning && (
@@ -133,7 +205,7 @@ export default function SpinAndSparkPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setLandedIndex(null)}
+              onClick={() => setLandedChallenge(null)}
               className="fixed inset-0 z-40 flex items-center justify-center bg-nog-black/50 p-4 backdrop-blur-[2px]"
             >
             <motion.div

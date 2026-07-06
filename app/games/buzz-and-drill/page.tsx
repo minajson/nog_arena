@@ -14,6 +14,7 @@ import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
 import VideoBackdrop from "@/components/VideoBackdrop";
 import BurstEffect from "@/components/BurstEffect";
 import { useBuzzQuestions, useSettings } from "@/lib/store";
+import { nextPackIndex } from "@/lib/storage";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
 import { speak, VOICE_LINES } from "@/lib/speech";
@@ -43,8 +44,14 @@ export default function BuzzAndDrillPage() {
 
   function startGame(names: string[]) {
     const enabled = allQuestions.filter((q) => q.enabled);
-    const count = Math.min(settings.buzzNumberOfQuestions, enabled.length);
-    setQuiz(shuffleArray(enabled).slice(0, count));
+    // Rotate through question packs (A/B/C) between games so back-to-back
+    // rounds never see the same questions. Falls back to the full bank when
+    // no packs exist (e.g. a fully custom admin question set).
+    const packs = Array.from(new Set(enabled.map((q) => q.pack).filter(Boolean))).sort() as string[];
+    const gamePack = packs.length > 1 ? packs[nextPackIndex("buzz-pack-cursor", packs.length)] : null;
+    const pool = gamePack ? enabled.filter((q) => q.pack === gamePack) : enabled;
+    const count = Math.min(settings.buzzNumberOfQuestions, pool.length);
+    setQuiz(shuffleArray(pool).slice(0, count));
     setPlayers(names);
     setResults(names.map((name) => ({ name, score: 0, correct: 0, total: 0 })));
     setQuestionIndex(0);

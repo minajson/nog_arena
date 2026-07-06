@@ -13,15 +13,14 @@ import GameIntro3D from "@/components/GameIntro3D";
 import AnimatedNOGBackground from "@/components/AnimatedNOGBackground";
 import VideoBackdrop from "@/components/VideoBackdrop";
 import { useScenarios, useSettings } from "@/lib/store";
+import { getUsedScenarioIds, saveUsedScenarioIds } from "@/lib/storage";
 import { shuffleArray } from "@/lib/shuffle";
 import { playSound } from "@/lib/sound";
 import { speak, VOICE_LINES } from "@/lib/speech";
-import type { Scenario, ScenarioBank } from "@/data/scenarios";
+import type { Scenario } from "@/data/scenarios";
 import type { PlayerResult } from "@/lib/scoring";
 
 type Phase = "intro" | "setup" | "playing" | "turn-end" | "results";
-
-const BANK_FOR_PLAYER: ScenarioBank[] = ["player1", "player2"];
 
 function buildOptions(scenario: Scenario): string[] {
   return shuffleArray([scenario.correctResponse, ...scenario.wrongOptions]);
@@ -45,12 +44,33 @@ export default function PressurePointPage() {
   const [endMessage, setEndMessage] = useState("");
   const timeLeftRef = useRef(settings.pressureTimePerPlayer);
   const scenarioStartRef = useRef(settings.pressureTimePerPlayer);
+  // Questions shown during THIS game — never repeated between the two players
+  // even if the cross-game pool has to recycle.
+  const gameSeenRef = useRef<Set<string>>(new Set());
 
-  function setupTurn(forPlayerIndex: number) {
-    const bank = BANK_FOR_PLAYER[forPlayerIndex];
-    const enabled = allScenarios.filter((s) => s.enabled && s.bank === bank);
-    const count = Math.min(settings.pressureNumberOfScenarios, enabled.length) || enabled.length;
-    const picked = shuffleArray(enabled).slice(0, Math.max(count, 1));
+  // A question is only "used" once it actually appears on screen; sampled but
+  // never-reached questions stay fresh for future games. Used ids persist
+  // across games so nothing repeats until the whole bank is exhausted.
+  function markScenarioShown(id: string) {
+    gameSeenRef.current.add(id);
+    const used = getUsedScenarioIds();
+    if (!used.includes(id)) saveUsedScenarioIds([...used, id]);
+  }
+
+  function setupTurn() {
+    const enabled = allScenarios.filter((s) => s.enabled);
+    const globalUsed = new Set(getUsedScenarioIds());
+    let pool = enabled.filter((s) => !globalUsed.has(s.id) && !gameSeenRef.current.has(s.id));
+    const wanted = Math.min(settings.pressureNumberOfScenarios, enabled.length) || enabled.length;
+    if (pool.length < wanted) {
+      // The whole bank has been seen across games — recycle it, but keep
+      // excluding anything already shown in the current game.
+      saveUsedScenarioIds([...gameSeenRef.current]);
+      pool = enabled.filter((s) => !gameSeenRef.current.has(s.id));
+      if (pool.length === 0) pool = enabled;
+    }
+    const picked = shuffleArray(pool).slice(0, Math.max(Math.min(wanted, pool.length), 1));
+    if (picked.length > 0) markScenarioShown(picked[0].id);
     setQueue(picked);
     setScenarioPos(0);
     setOptions(picked.length ? buildOptions(picked[0]) : []);
@@ -64,11 +84,12 @@ export default function PressurePointPage() {
   }
 
   function startGame(names: string[]) {
+    gameSeenRef.current = new Set();
     setPlayers(names);
     setResults(names.map((name) => ({ name, score: 0, correct: 0, total: 0 })));
     setPlayerIndex(0);
     setPhase("playing");
-    setupTurn(0);
+    setupTurn();
     speak(VOICE_LINES.gameStart);
   }
 
@@ -86,6 +107,7 @@ export default function PressurePointPage() {
       finishTurn("Scenarios complete!");
       return;
     }
+    markScenarioShown(queue[nextPos].id);
     setScenarioPos(nextPos);
     setOptions(buildOptions(queue[nextPos]));
     setFeedback(null);
@@ -125,7 +147,7 @@ export default function PressurePointPage() {
     if (playerIndex === 0) {
       setPlayerIndex(1);
       setPhase("playing");
-      setupTurn(1);
+      setupTurn();
     } else {
       setPhase("results");
     }
@@ -145,14 +167,14 @@ export default function PressurePointPage() {
         <GameIntro3D
           title="Pressure Point"
           icon={Gauge}
-          objective="Make the right emergency call, fast. Each player answers their own set of scenarios against the clock."
-          players="2 Players (separate question sets)"
+          objective="Fun under fire! Answer as many quick-fire brain teasers, emoji riddles and silly questions as you can before your clock runs out."
+          players="2 Players (separate question packs)"
           timer={`${settings.pressureTimePerPlayer}s total per player`}
           howToPlay={[
-            "Read the emergency scenario and pick the best first response.",
-            "Answer as many scenarios as you can before your timer runs out.",
-            "Player 1 and Player 2 get different but equally balanced question sets.",
-            "Wrong answers reveal the correct response before moving on.",
+            "Read the question and tap the best answer — fast.",
+            "Answer as many as you can before your timer runs out.",
+            "No repeats: every question appears only once across players and games.",
+            "Wrong answers reveal the correct one before moving on.",
           ]}
           scoring={[
             "Correct answer: +10 points.",

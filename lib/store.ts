@@ -85,6 +85,26 @@ export function resetSpinChallenges() {
   spinStore.reset();
 }
 
+/* Spin & Spark no-repeat pool: ids of challenges already landed this event. */
+const spinUsedStore = createStore(
+  storage.getUsedSpinChallengeIds,
+  storage.saveUsedSpinChallengeIds,
+  [] as string[]
+);
+export function useUsedSpinChallengeIds(): string[] {
+  return spinUsedStore.useValue();
+}
+export function getUsedSpinChallengeSnapshot(): string[] {
+  return spinUsedStore.getSnapshot();
+}
+export function markSpinChallengeUsed(id: string) {
+  const current = spinUsedStore.getSnapshot();
+  if (!current.includes(id)) spinUsedStore.set([...current, id]);
+}
+export function resetUsedSpinChallenges() {
+  spinUsedStore.set([]);
+}
+
 export function useHazards(): Hazard[] {
   return hazardStore.useValue();
 }
